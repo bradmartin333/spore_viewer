@@ -15,7 +15,8 @@ int main(void)
     Image usaf_target = LoadImage("../resources/usaf_target.png");
     Rectangle usaf_rect = {0, 0, 1.0f * usaf_target.width, 1.0f * usaf_target.height};
     Texture2D texture = LoadTextureFromImage(usaf_target);
-    UnloadImage(usaf_target);
+
+    std::cout << usaf_target.data[0] << std::endl;
 
     bool test_toggle = false;
     Vector2 a_pos = {-1, -1};
@@ -55,6 +56,8 @@ int main(void)
         EndDrawing();
     }
     UnloadTexture(texture);
+    UnloadImage(usaf_target);
     CloseWindow(); 
     return 0;
 }
+
