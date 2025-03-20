@@ -17,7 +17,7 @@ int main(void)
     Rectangle usaf_rect = {0, 0, 1.0f * usaf_target.width, 1.0f * usaf_target.height};
     Texture2D texture = LoadTextureFromImage(usaf_target);
 
-    bool test_toggle = false;
+    bool toggle = false;
     Vector2 a_pos = {-1, -1};
     Vector2 b_pos = {-1, -1};
 
@@ -38,12 +38,9 @@ int main(void)
         }
         
         if (mouse_pos.x != -1 && mouse_pos.y != -1) {
-            test_toggle = !test_toggle;
-
-            if (test_toggle)
-                a_pos = mouse_pos;
-            else
-                b_pos = mouse_pos;
+            toggle = !toggle;
+            if (toggle) a_pos = mouse_pos;
+            else b_pos = mouse_pos;
         }
 
         if (CheckCollisionPointRec(a_pos, usaf_rect) && 
@@ -51,13 +48,12 @@ int main(void)
             DrawLineEx(a_pos, b_pos, 3, GRAY);
 
             int distance = static_cast<int>(Vector2Distance(a_pos, b_pos));
-            int idx = 0;
             for (int i = 0; i < distance; i++) {
                 double t = static_cast<double>(i) / (distance - 1);
                 Color c = GetImageColor(usaf_target, 
                     a_pos.x + (b_pos.x - a_pos.x) * t, 
                     a_pos.y + (b_pos.y - a_pos.y) * t);
-                DrawRectangle(idx++ * 5, usaf_target.height + 50, 5, 5, c); 
+                DrawRectangle(i * 5, usaf_target.height + 50, 5, 5, c); 
             }
         }
         DrawCircleV(a_pos, 5, GREEN);
