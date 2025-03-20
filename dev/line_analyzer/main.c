@@ -1,8 +1,9 @@
 #include <iostream>
 
 #include "raylib.h"
+#include "raymath.h"
 
-bool is_between(int val, int min, int max) {
+bool is_between(const int& val, const int& min, const int& max) {
     return val >= min && val <= max;
 }
 
@@ -15,8 +16,6 @@ int main(void)
     Image usaf_target = LoadImage("../resources/usaf_target.png");
     Rectangle usaf_rect = {0, 0, 1.0f * usaf_target.width, 1.0f * usaf_target.height};
     Texture2D texture = LoadTextureFromImage(usaf_target);
-
-    std::cout << usaf_target.data[0] << std::endl;
 
     bool test_toggle = false;
     Vector2 a_pos = {-1, -1};
@@ -48,8 +47,19 @@ int main(void)
         }
 
         if (CheckCollisionPointRec(a_pos, usaf_rect) && 
-            CheckCollisionPointRec(b_pos, usaf_rect))
+            CheckCollisionPointRec(b_pos, usaf_rect)) {
             DrawLineEx(a_pos, b_pos, 3, GRAY);
+
+            int distance = static_cast<int>(Vector2Distance(a_pos, b_pos));
+            int idx = 0;
+            for (int i = 0; i < distance; i++) {
+                double t = static_cast<double>(i) / (distance - 1);
+                Color c = GetImageColor(usaf_target, 
+                    a_pos.x + (b_pos.x - a_pos.x) * t, 
+                    a_pos.y + (b_pos.y - a_pos.y) * t);
+                DrawRectangle(idx++ * 5, usaf_target.height + 50, 5, 5, c); 
+            }
+        }
         DrawCircleV(a_pos, 5, GREEN);
         DrawCircleV(b_pos, 5, RED);
         
