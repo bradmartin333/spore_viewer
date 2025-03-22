@@ -3,12 +3,13 @@
 #include "raylib.h"
 #include "raymath.h"
 
-
-const int screenWidth = 631 + 150;
-const int screenHeight = 509 + 150;
+const int imageWidth = 889;
+const int imageHeight = 500;
+const int screenWidth = imageWidth + 150;
+const int screenHeight = imageHeight + 150;
 const int edgeThreshold = 10;
 
-bool is_between(const int& val, const int& min, const int& max) {
+bool isBetween(const int& val, const int& min, const int& max) {
     return val >= min && val <= max;
 }
 
@@ -16,14 +17,15 @@ int main(void)
 {
     InitWindow(screenWidth, screenHeight, "line analyzer");
     
-    Image usaf_target = LoadImage("../resources/usaf_target.png");
-    Rectangle usaf_rect = {0, 0, 1.0f * usaf_target.width, 1.0f * usaf_target.height};
-    Texture2D texture = LoadTextureFromImage(usaf_target);
+    Image usafTarget = LoadImage("../resources/elp_usaf_target/10x_G3E4_0p.png");
+    ImageResizeNN(&usafTarget, imageWidth, imageHeight);
+    Rectangle usafRect = {0, 0, 1.0f * imageWidth, 1.0f * imageHeight};
+    Texture2D texture = LoadTextureFromImage(usafTarget);
 
     bool toggle = false;
     bool updated = false;
-    Vector2 a_pos = {-1, -1};
-    Vector2 b_pos = {-1, -1};
+    Vector2 aPos = {-1, -1};
+    Vector2 bPos = {-1, -1};
 
     SetTargetFPS(60);
     while (!WindowShouldClose()) 
@@ -33,72 +35,72 @@ int main(void)
         
         DrawTexture(texture, 0, 0, WHITE);
 
-        Vector2 mouse_pos = {-1, -1};
+        Vector2 mousePos = {-1, -1};
         if (IsMouseButtonPressed(0)) {
-            Vector2 buffer_mouse_pos = GetMousePosition();
-            if (is_between(buffer_mouse_pos.x, 0, usaf_target.width) &&
-                is_between(buffer_mouse_pos.y, 0, usaf_target.height))
-                mouse_pos = buffer_mouse_pos;
+            Vector2 bufferMousePos = GetMousePosition();
+            if (isBetween(bufferMousePos.x, 0, imageWidth) &&
+                isBetween(bufferMousePos.y, 0, imageHeight))
+                mousePos = bufferMousePos;
         }
         
-        if (!Vector2Equals(mouse_pos, {-1, -1})) {
+        if (!Vector2Equals(mousePos, {-1, -1})) {
             updated = true;
             toggle = !toggle;
             if (toggle)
-                a_pos = mouse_pos;
+                aPos = mousePos;
             else 
-                b_pos = mouse_pos;
+                bPos = mousePos;
         }
 
-        if (CheckCollisionPointRec(a_pos, usaf_rect) && 
-            CheckCollisionPointRec(b_pos, usaf_rect)) {
-            DrawLineEx(a_pos, b_pos, 3, GRAY);
+        if (CheckCollisionPointRec(aPos, usafRect) && 
+            CheckCollisionPointRec(bPos, usafRect)) {
+            DrawLineEx(aPos, bPos, 3, GRAY);
 
-            int distance = static_cast<int>(Vector2Distance(a_pos, b_pos));
+            int distance = static_cast<int>(Vector2Distance(aPos, bPos));
 
             float left = 10.0f;
-            float top = usaf_target.height + 10;
-            Vector2 last_point = {-1, -1};
+            float top = imageHeight + 10;
+            Vector2 lastPoint = {-1, -1};
             for (int i = 0; i < distance; i++) {
                 double t = static_cast<double>(i) / (distance - 1);
-                Color c = GetImageColor(usaf_target, 
-                    a_pos.x + (b_pos.x - a_pos.x) * t, 
-                    a_pos.y + (b_pos.y - a_pos.y) * t);
+                Color c = GetImageColor(usafTarget, 
+                    aPos.x + (bPos.x - aPos.x) * t, 
+                    aPos.y + (bPos.y - aPos.y) * t);
                 float val = Clamp(
                     Vector3Length({
                         static_cast<float>(c.r),
                         static_cast<float>(c.g),
                         static_cast<float>(c.b)}),
-                    0, screenHeight - usaf_target.height - 20
+                    0, screenHeight - imageHeight - 20
                 );
-                Vector2 this_point = {left + i, top + val}; 
-                if (Vector2Equals(last_point, {-1, -1}))
-                    last_point = this_point;
+                Vector2 thisPoint = {left + i, top + val}; 
+                if (Vector2Equals(lastPoint, {-1, -1}))
+                    lastPoint = thisPoint;
 
                 c = BLACK;
-                float diff = this_point.y - last_point.y;
+                float diff = thisPoint.y - lastPoint.y;
                 if (diff > edgeThreshold) {
                     c = RED;
                     if (updated)
-                        std::cout << "FALLING " << this_point.x << ", " << this_point.y << std::endl;
+                        std::cout << "FALLING " << thisPoint.x << ", " << thisPoint.y << std::endl;
                 }
                 else if (diff < -edgeThreshold) {
                     c = GREEN;
                     if (updated)
-                        std::cout << "RISING " << this_point.x << ", " << this_point.y << std::endl;
+                        std::cout << "RISING " << thisPoint.x << ", " << thisPoint.y << std::endl;
                 }
-                DrawLineV(last_point, this_point, c); 
-                last_point = this_point;
+                DrawLineV(lastPoint, thisPoint, c); 
+                lastPoint = thisPoint;
             }
         }
-        DrawCircleV(a_pos, 5, GREEN);
-        DrawCircleV(b_pos, 5, RED);
+        DrawCircleV(aPos, 5, GREEN);
+        DrawCircleV(bPos, 5, RED);
         
         EndDrawing();
         updated = false;
     }
     UnloadTexture(texture);
-    UnloadImage(usaf_target);
+    UnloadImage(usafTarget);
     CloseWindow(); 
     return 0;
 }
