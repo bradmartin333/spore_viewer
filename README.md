@@ -1,4 +1,4 @@
-# spore-o-scope
+# spore_viewer
 
 tooling for fungal microscopy
 
