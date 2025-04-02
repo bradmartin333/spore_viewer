@@ -88,10 +88,9 @@
                 }
             }, false);
 
-            // Mouse up event for ending drag or zooming
+            // Mouse up event for ending drag
             canvas.addEventListener('mouseup', (evt) => {
                 dragStart = null;
-                if (!dragged) zoom(evt.shiftKey ? -1 : 1);
             }, false);
 
             const scaleFactor = 1.1;
@@ -118,6 +117,25 @@
 
             canvas.addEventListener('DOMMouseScroll', handleScroll, false); // For Firefox
             canvas.addEventListener('mousewheel', handleScroll, false); // For other browsers
+
+            // Add a click event listener to the canvas
+            canvas.addEventListener('click', (evt) => {
+                if (!dragged) { // Only register click if there was no drag
+                    const rect = canvas.getBoundingClientRect();
+
+                    // Get the mouse position relative to the canvas
+                    const mouseX = evt.clientX - rect.left;
+                    const mouseY = evt.clientY - rect.top;
+
+                    // Transform the mouse position to raw image coordinates
+                    const pt = ctx.transformedPoint(mouseX, mouseY);
+
+                    // Send the raw image coordinates to the C# backend
+                    const message = JSON.stringify({ x: pt.x, y: pt.y });
+                    window.external.sendMessage(message);
+                }
+                dragged = false; // Reset dragged state
+            });
         }
 
         // Load the canvas when the window is ready
