@@ -11,7 +11,7 @@ namespace SporeViewer
         {
             ArgumentNullException.ThrowIfNull(args);
 
-            string windowTitle = "Photino for .NET Demo App";
+            string windowTitle = "spore viewer";
             var window = new PhotinoWindow()
                 .SetLogVerbosity(0)
                 .SetTitle(windowTitle)
