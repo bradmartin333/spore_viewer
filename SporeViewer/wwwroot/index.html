@@ -1,0 +1,48 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>spore viewer</title>
+    <link rel="stylesheet" href="assets/main.css" />
+</head>
+
+<body>
+    <h1 class="text-center">hello from the spore viewer ui</h1>
+
+    <button class="primary center" onclick="callDotNet()">load image</button>
+    <img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" width="480" height="270" alt="" class="center"
+        id="test-picture" />
+
+    <script src="app://dynamic.js"></script>
+
+    <script>
+        function callDotNet() {
+            window.external.sendMessage('load');
+        }
+
+        document.getElementById("test-picture").addEventListener('click', function (event) {
+            bounds = this.getBoundingClientRect();
+            var left = bounds.left;
+            var top = bounds.top;
+            var x = event.pageX - left;
+            var y = event.pageY - top;
+            var cw = this.clientWidth
+            var ch = this.clientHeight
+            var iw = this.naturalWidth
+            var ih = this.naturalHeight
+            var px = x / cw * iw
+            var py = y / ch * ih
+            var output = "click on " + this.tagName + " at pixel (" + px + "," + py + ") "
+            output += "mouse pos (" + x + "," + y + ") relative to boundingClientRect at (" + left + "," + top + ") "
+            output += "client image size: " + cw + " x " + ch + " natural image size: " + iw + " x " + ih
+            window.external.sendMessage(output);
+        });
+
+        window.external.receiveMessage(message => document.getElementById("test-picture").src = message);
+    </script>
+</body>
+
+</html>
