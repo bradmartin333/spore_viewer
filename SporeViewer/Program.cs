@@ -31,6 +31,7 @@ namespace SporeViewer
                         Console.WriteLine(message);
                     }
                 })
+                .SetLogVerbosity(0)
                 .Load("wwwroot/index.html");
             window.WaitForClose();
         }

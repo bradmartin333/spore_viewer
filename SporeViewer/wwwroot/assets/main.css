@@ -11,6 +11,13 @@ body {
     font-weight: normal;
 }
 
+canvas {
+    display: block;
+    margin: 1em auto;
+    background: #fff;
+    border: 1px solid #ccc;
+}
+
 .logo {
     display: block;
     width: 300px;
