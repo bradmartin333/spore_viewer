@@ -13,6 +13,7 @@ namespace SporeViewer
 
             string windowTitle = "Photino for .NET Demo App";
             var window = new PhotinoWindow()
+                .SetLogVerbosity(0)
                 .SetTitle(windowTitle)
                 .SetUseOsDefaultSize(false)
                 .SetSize(new System.Drawing.Size(1024, 800))
@@ -31,7 +32,6 @@ namespace SporeViewer
                         Console.WriteLine(message);
                     }
                 })
-                .SetLogVerbosity(0)
                 .Load("wwwroot/index.html");
             window.WaitForClose();
         }

@@ -6,7 +6,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Spore Viewer</title>
-    <link rel="stylesheet" href="assets/main.css" />
+    <link rel="stylesheet" href="main.css" />
 </head>
 
 <body>
@@ -142,7 +142,7 @@
         window.onload = loadCanvas;
 
         // Set the initial image source
-        gkhead.src = "../../../../../dev/resources/test_spores/4x.png";
+        gkhead.src = "assets/spore_print.jpg";
 
         /**
          * Adds transformation tracking to the canvas context.
@@ -217,6 +217,15 @@
             // Wait for the image to load before redrawing the canvas
             gkhead.onload = function () {
                 const ctx = canvas.getContext('2d');
+
+                // Center and resize the image to fit within the canvas bounds
+                const scaleX = canvas.width / gkhead.width;
+                const scaleY = canvas.height / gkhead.height;
+                const scale = Math.min(scaleX, scaleY);
+                const offsetX = (canvas.width - gkhead.width * scale) / 2;
+                const offsetY = (canvas.height - gkhead.height * scale) / 2;
+
+                ctx.setTransform(scale, 0, 0, scale, offsetX, offsetY);
                 redraw(ctx);
             };
 
