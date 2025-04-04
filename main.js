@@ -160,6 +160,28 @@ function trackTransforms(ctx) {
     };
 }
 
+document.addEventListener('DOMContentLoaded', function () {
+    const modeToggle = document.getElementById('modeToggle');
+
+    let isSporeMode = true; // Start in spore mode
+
+    modeToggle.addEventListener('click', function () {
+        if (isSporeMode) {
+            // Switch to scale mode
+            modeToggle.textContent = 'scale mode';
+            modeToggle.classList.remove('spore-mode');
+            modeToggle.classList.add('scale-mode');
+            isSporeMode = false;
+        } else {
+            // Switch to spore mode
+            modeToggle.textContent = 'spore mode';
+            modeToggle.classList.remove('scale-mode');
+            modeToggle.classList.add('spore-mode');
+            isSporeMode = true;
+        }
+    });
+});
+
 // window.external.receiveMessage((message) => {
 //     gkhead.src = message;
 

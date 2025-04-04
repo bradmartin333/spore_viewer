@@ -1,4 +1,9 @@
-html, body {
+:root {
+    --equal-spacing: 0px;
+}
+
+html,
+body {
     margin: 0;
     padding: 0;
 }
@@ -11,13 +16,87 @@ body {
     font-weight: normal;
 }
 
+
 canvas {
+    margin-top: var(--equal-spacing);
     display: block;
-    margin: 1em auto;
+    margin-left: auto;
+    margin-right: auto;
     background: #fff;
     border: 1px solid #ccc;
 }
 
+button {
+    width: 10em;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+select {
+    width: 10em;
+    padding: 10px 20px;
+    font-size: 16px;
+    border: none;
+    border-radius: 5px;
+    background-color: #bfc7d0;
+    color: black;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+    text-align-last: center;
+}
+
+select:hover {
+    background-color: #a9b0b8;
+}
+
+h1 {
+    margin-bottom: var(--equal-spacing);
+    text-align: center;
+}
+
+#openImage {
+    color: black;
+    background-color: #bfc7d0;
+}
+
+#openImage:hover {
+    color: black;
+    background-color: #a9b0b8;
+}
+
+.spore-mode {
+    background-color: #28A745;
+}
+
+.spore-mode:hover {
+    background-color: #1e7e34;
+}
+
+.scale-mode {
+    background-color: #007BFF;
+}
+
+.scale-mode:hover {
+    background-color: #0056b3;
+}
+
 .text-center {
     text-align: center;
+}
+
+.container {
+    width: 80%;
+    max-width: 800px;
+    border: none;
+    padding: 20px;
+    box-sizing: border-box;
+    margin-bottom: var(--equal-spacing);
 }
