@@ -161,6 +161,13 @@ function trackTransforms(ctx) {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
+    // Check if the user is on a mobile or tablet device
+    const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+    if (isMobile) {
+        alert("this website is made for use with a mouse and desktop and may not work correctly on your device");
+    }
+
     const modeToggle = document.getElementById('modeToggle');
     const openImageButton = document.getElementById('openImage');
     const imageInput = document.getElementById('imageInput');
