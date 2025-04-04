@@ -162,42 +162,56 @@ function trackTransforms(ctx) {
 
 document.addEventListener('DOMContentLoaded', function () {
     const modeToggle = document.getElementById('modeToggle');
+    const openImageButton = document.getElementById('openImage');
+    const imageInput = document.getElementById('imageInput');
 
     let isSporeMode = true; // Start in spore mode
 
+    // Toggle mode logic
     modeToggle.addEventListener('click', function () {
         if (isSporeMode) {
-            // Switch to scale mode
             modeToggle.textContent = 'scale mode';
             modeToggle.classList.remove('spore-mode');
             modeToggle.classList.add('scale-mode');
             isSporeMode = false;
         } else {
-            // Switch to spore mode
             modeToggle.textContent = 'spore mode';
             modeToggle.classList.remove('scale-mode');
             modeToggle.classList.add('spore-mode');
             isSporeMode = true;
         }
     });
+
+    // Open image functionality
+    openImageButton.addEventListener('click', () => {
+        imageInput.click(); // Trigger the hidden file input
+    });
+
+    imageInput.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                gkhead.src = e.target.result; // Set the image source
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // Load the image onto the canvas
+    gkhead.onload = function () {
+        const ctx = canvas.getContext('2d');
+        const scaleX = canvas.width / gkhead.width;
+        const scaleY = canvas.height / gkhead.height;
+        const scale = Math.min(scaleX, scaleY);
+        const offsetX = (canvas.width - gkhead.width * scale) / 2;
+        const offsetY = (canvas.height - gkhead.height * scale) / 2;
+
+        ctx.setTransform(scale, 0, 0, scale, offsetX, offsetY);
+        redraw(ctx); // Redraw the canvas with the new image
+    };
+
+    gkhead.onerror = function () {
+        console.error("Failed to load image.");
+    };
 });
-
-// window.external.receiveMessage((message) => {
-//     gkhead.src = message;
-
-//     gkhead.onload = function () {
-//         const ctx = canvas.getContext('2d');
-//         const scaleX = canvas.width / gkhead.width;
-//         const scaleY = canvas.height / gkhead.height;
-//         const scale = Math.min(scaleX, scaleY);
-//         const offsetX = (canvas.width - gkhead.width * scale) / 2;
-//         const offsetY = (canvas.height - gkhead.height * scale) / 2;
-
-//         ctx.setTransform(scale, 0, 0, scale, offsetX, offsetY);
-//         redraw(ctx);
-//     };
-
-//     gkhead.onerror = function () {
-//         console.error("Failed to load image:", message);
-//     };
-// });
