@@ -5,8 +5,11 @@ canvas.height = 600;
 
 const gkhead = new Image();
 
+// Array to store drawn points
+const points = [];
+
 /**
- * Redraws the canvas with the current image and transformations.
+ * Redraws the canvas with the current image, transformations, and points.
  * @param {CanvasRenderingContext2D} ctx - The canvas rendering context.
  */
 function redraw(ctx) {
@@ -25,6 +28,17 @@ function redraw(ctx) {
     ctx.restore();
 
     ctx.drawImage(gkhead, 0, 0);
+
+    // Draw points as constant-size circles
+    ctx.save();
+    points.forEach(point => {
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, 5 / ctx.getTransform().a, 0, 2 * Math.PI); // Adjust size based on current scale
+        ctx.fillStyle = 'red';
+        ctx.fill();
+        ctx.closePath();
+    });
+    ctx.restore();
 }
 
 /**
@@ -87,8 +101,15 @@ function loadCanvas() {
             const mouseX = evt.clientX - rect.left;
             const mouseY = evt.clientY - rect.top;
             const pt = ctx.transformedPoint(mouseX, mouseY);
+
+            // Add the point to the array in image coordinates
+            points.push({ x: pt.x, y: pt.y });
+
+            // Redraw to include the new point
+            redraw(ctx);
+
             const message = JSON.stringify({ x: pt.x, y: pt.y });
-            window.external.sendMessage(message);
+            console.log(message);
         }
         dragged = false;
     });
@@ -160,22 +181,65 @@ function trackTransforms(ctx) {
     };
 }
 
-// window.external.receiveMessage((message) => {
-//     gkhead.src = message;
+document.addEventListener('DOMContentLoaded', function () {
+    // Check if the user is on a mobile or tablet device
+    const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-//     gkhead.onload = function () {
-//         const ctx = canvas.getContext('2d');
-//         const scaleX = canvas.width / gkhead.width;
-//         const scaleY = canvas.height / gkhead.height;
-//         const scale = Math.min(scaleX, scaleY);
-//         const offsetX = (canvas.width - gkhead.width * scale) / 2;
-//         const offsetY = (canvas.height - gkhead.height * scale) / 2;
+    if (isMobile) {
+        alert("this website is made for use with a mouse and desktop and may not work correctly on your device");
+    }
 
-//         ctx.setTransform(scale, 0, 0, scale, offsetX, offsetY);
-//         redraw(ctx);
-//     };
+    const modeToggle = document.getElementById('modeToggle');
+    const openImageButton = document.getElementById('openImage');
+    const imageInput = document.getElementById('imageInput');
 
-//     gkhead.onerror = function () {
-//         console.error("Failed to load image:", message);
-//     };
-// });
+    let isSporeMode = true; // Start in spore mode
+
+    // Toggle mode logic
+    modeToggle.addEventListener('click', function () {
+        if (isSporeMode) {
+            modeToggle.textContent = 'scale mode';
+            modeToggle.classList.remove('spore-mode');
+            modeToggle.classList.add('scale-mode');
+            isSporeMode = false;
+        } else {
+            modeToggle.textContent = 'spore mode';
+            modeToggle.classList.remove('scale-mode');
+            modeToggle.classList.add('spore-mode');
+            isSporeMode = true;
+        }
+    });
+
+    // Open image functionality
+    openImageButton.addEventListener('click', () => {
+        imageInput.click(); // Trigger the hidden file input
+    });
+
+    imageInput.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                gkhead.src = e.target.result; // Set the image source
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // Load the image onto the canvas
+    gkhead.onload = function () {
+        const ctx = canvas.getContext('2d');
+        const scaleX = canvas.width / gkhead.width;
+        const scaleY = canvas.height / gkhead.height;
+        const scale = Math.min(scaleX, scaleY);
+        const offsetX = (canvas.width - gkhead.width * scale) / 2;
+        const offsetY = (canvas.height - gkhead.height * scale) / 2;
+
+        ctx.setTransform(scale, 0, 0, scale, offsetX, offsetY);
+        redraw(ctx); // Redraw the canvas with the new image
+    };
+
+    gkhead.onerror = function () {
+        console.error("Failed to load image.");
+    };
+});
