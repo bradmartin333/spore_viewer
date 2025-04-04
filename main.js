@@ -5,8 +5,11 @@ canvas.height = 600;
 
 const gkhead = new Image();
 
+// Array to store drawn points
+const points = [];
+
 /**
- * Redraws the canvas with the current image and transformations.
+ * Redraws the canvas with the current image, transformations, and points.
  * @param {CanvasRenderingContext2D} ctx - The canvas rendering context.
  */
 function redraw(ctx) {
@@ -25,6 +28,17 @@ function redraw(ctx) {
     ctx.restore();
 
     ctx.drawImage(gkhead, 0, 0);
+
+    // Draw points as constant-size circles
+    ctx.save();
+    points.forEach(point => {
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, 5 / ctx.getTransform().a, 0, 2 * Math.PI); // Adjust size based on current scale
+        ctx.fillStyle = 'red';
+        ctx.fill();
+        ctx.closePath();
+    });
+    ctx.restore();
 }
 
 /**
@@ -87,8 +101,15 @@ function loadCanvas() {
             const mouseX = evt.clientX - rect.left;
             const mouseY = evt.clientY - rect.top;
             const pt = ctx.transformedPoint(mouseX, mouseY);
+
+            // Add the point to the array in image coordinates
+            points.push({ x: pt.x, y: pt.y });
+
+            // Redraw to include the new point
+            redraw(ctx);
+
             const message = JSON.stringify({ x: pt.x, y: pt.y });
-            window.external.sendMessage(message);
+            console.log(message);
         }
         dragged = false;
     });
