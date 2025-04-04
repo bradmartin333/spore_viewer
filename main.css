@@ -1,0 +1,23 @@
+html, body {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    padding: 2em;
+    color: #111;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 15px;
+    font-weight: normal;
+}
+
+canvas {
+    display: block;
+    margin: 1em auto;
+    background: #fff;
+    border: 1px solid #ccc;
+}
+
+.text-center {
+    text-align: center;
+}

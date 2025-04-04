@@ -1,8 +1,3 @@
-// Function to send a message to the .NET backend
-function callDotNet() {
-    window.external.sendMessage('load');
-}
-
 // Initialize canvas and image
 const canvas = document.getElementById('image-canvas');
 canvas.width = 800;
@@ -165,22 +160,22 @@ function trackTransforms(ctx) {
     };
 }
 
-window.external.receiveMessage((message) => {
-    gkhead.src = message;
+// window.external.receiveMessage((message) => {
+//     gkhead.src = message;
 
-    gkhead.onload = function () {
-        const ctx = canvas.getContext('2d');
-        const scaleX = canvas.width / gkhead.width;
-        const scaleY = canvas.height / gkhead.height;
-        const scale = Math.min(scaleX, scaleY);
-        const offsetX = (canvas.width - gkhead.width * scale) / 2;
-        const offsetY = (canvas.height - gkhead.height * scale) / 2;
+//     gkhead.onload = function () {
+//         const ctx = canvas.getContext('2d');
+//         const scaleX = canvas.width / gkhead.width;
+//         const scaleY = canvas.height / gkhead.height;
+//         const scale = Math.min(scaleX, scaleY);
+//         const offsetX = (canvas.width - gkhead.width * scale) / 2;
+//         const offsetY = (canvas.height - gkhead.height * scale) / 2;
 
-        ctx.setTransform(scale, 0, 0, scale, offsetX, offsetY);
-        redraw(ctx);
-    };
+//         ctx.setTransform(scale, 0, 0, scale, offsetX, offsetY);
+//         redraw(ctx);
+//     };
 
-    gkhead.onerror = function () {
-        console.error("Failed to load image:", message);
-    };
-});
+//     gkhead.onerror = function () {
+//         console.error("Failed to load image:", message);
+//     };
+// });
