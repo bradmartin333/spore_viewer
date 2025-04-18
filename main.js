@@ -31,39 +31,39 @@ function redraw(ctx) {
 
     ctx.drawImage(gkhead, 0, 0);
     ctx.save();
-
-    points.forEach(point => {
-        ctx.beginPath();
-        ctx.arc(point.x, point.y, 5 / ctx.getTransform().a, 0, 2 * Math.PI); // Adjust size based on current scale
-        ctx.fillStyle = point.idx > 1 ? 'green' : 'red';
-        ctx.fill();
-        ctx.closePath();
-    });
-
-    lines.forEach(line => {
-        ctx.beginPath();
-        ctx.moveTo(line.x1, line.y1);
-        ctx.lineTo(line.x2, line.y2);
-        ctx.strokeStyle = 'blue';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-        ctx.closePath();
-    });
-
+    
     blobs.forEach(blob => {
         ctx.beginPath();
         ctx.moveTo(blob.line1.x1, blob.line1.y1);
         ctx.lineTo(blob.line1.x2, blob.line1.y2);
         ctx.strokeStyle = 'purple';
-        ctx.lineWidth = 1;
+        ctx.lineWidth = 2 / ctx.getTransform().a;
         ctx.stroke();
         ctx.closePath();
         ctx.beginPath();
         ctx.lineTo(blob.line2.x2, blob.line2.y2);
         ctx.lineTo(blob.line2.x1, blob.line2.y1);
         ctx.strokeStyle = 'purple';
-        ctx.lineWidth = 1;
+        ctx.lineWidth = 2 / ctx.getTransform().a;
         ctx.stroke();
+        ctx.closePath();
+    });
+    
+    lines.forEach(line => {
+        ctx.beginPath();
+        ctx.moveTo(line.x1, line.y1);
+        ctx.lineTo(line.x2, line.y2);
+        ctx.strokeStyle = 'blue';
+        ctx.lineWidth = 3 / ctx.getTransform().a;
+        ctx.stroke();
+        ctx.closePath();
+    });
+    
+    points.forEach(point => {
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, 5 / ctx.getTransform().a, 0, 2 * Math.PI); // Adjust size based on current scale
+        ctx.fillStyle = point.idx > 1 ? 'green' : 'red';
+        ctx.fill();
         ctx.closePath();
     });
 
