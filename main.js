@@ -70,6 +70,75 @@ function redraw(ctx) {
     ctx.restore();
 }
 
+function lineSegmentIntersection(p1, q1, p2, q2) {
+    // Helper function to calculate the orientation of three points (p, q, r).
+    // Returns:
+    //   0 if the points are collinear.
+    //   1 if the points are clockwise.
+    //  -1 if the points are counterclockwise.
+    function orientation(p, q, r) {
+        const val = (q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y);
+        if (val === 0) return 0;  // Collinear
+        return (val > 0) ? 1 : -1; // Clockwise or counterclockwise
+    }
+
+    // Helper function to check if a point 'p' lies on the line segment 'p1q1'.
+    function onSegment(p, p1, q1) {
+        if (p.x <= Math.max(p1.x, q1.x) && p.x >= Math.min(p1.x, q1.x) &&
+            p.y <= Math.max(p1.y, q1.y) && p.y >= Math.min(p1.y, q1.y)) {
+            return true;
+        }
+        return false;
+    }
+
+    // 1. Calculate the orientations of the four possible triangles formed by the points.
+    const orient1 = orientation(p1, q1, p2);
+    const orient2 = orientation(p1, q1, q2);
+    const orient3 = orientation(p2, q2, p1);
+    const orient4 = orientation(p2, q2, q1);
+
+    // 2. Check for general intersection (when orientations are different).
+    if (orient1 !== orient2 && orient3 !== orient4) {
+        // 3. Calculate the intersection point.
+        // Using the formula derived from solving the parametric equations of the lines:
+        // x = x1 + (x2 - x1) * t
+        // y = y1 + (y2 - y1) * t
+        // where t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) /
+        //           ((x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4))
+        const denominator = ((p1.x - q1.x) * (p2.y - q2.y) - (p1.y - q1.y) * (p2.x - q2.x));
+        if (denominator === 0) {
+            return { intersect: false, point: null }; // Parallel lines, no intersection
+        }
+        const t = ((p1.x - p2.x) * (p2.y - q2.y) - (p1.y - p2.y) * (p2.x - q2.x)) / denominator;
+        const u = -((p1.x - q1.x) * (p1.y - p2.y) - (p1.y - q1.y) * (p1.x - p2.x)) / denominator;
+
+        if (t >= 0 && t <= 1 && u >= 0 && u <= 1) {
+            const intersectionX = p1.x + t * (q1.x - p1.x);
+            const intersectionY = p1.y + t * (q1.y - p1.y);
+            return { intersect: true, point: { x: intersectionX, y: intersectionY } };
+        } else {
+            return { intersect: false, point: null }; // Intersection outside the segments
+        }
+    }
+
+    // 4. Check for special cases (collinear points).
+    if (orient1 === 0 && onSegment(p2, p1, q1)) {
+        return { intersect: true, point: p2 };
+    }
+    if (orient2 === 0 && onSegment(q2, p1, q1)) {
+        return { intersect: true, point: q2 };
+    }
+    if (orient3 === 0 && onSegment(p1, p2, q2)) {
+        return { intersect: true, point: p1 };
+    }
+    if (orient4 === 0 && onSegment(q1, p2, q2)) {
+        return { intersect: true, point: q1 };
+    }
+
+    // 5. If none of the above conditions are met, the line segments do not intersect.
+    return { intersect: false, point: null };
+}
+
 /**
  * Sets up the canvas for zooming, panning, and interaction.
  */
@@ -135,12 +204,54 @@ function loadCanvas() {
             // have a new xy where line index 1 is perpendicular to line index 0
             if (lines.length === 2) {
                 const line = lines[0];
-                const dx = line.x2 - line.x1;
+                
+                // get p1 and p2 where p1 is the lowest y value point
+                // and p2 is the highest y value point
+                const p1 = { x: line.x1, y: line.y1 };
+                const p2 = { x: line.x2, y: line.y2 };
+                if (p1.y > p2.y) {
+                    p1.x = line.x2;
+                    p1.y = line.y2;
+                    p2.x = line.x1;
+                    p2.y = line.y1;
+                }
+
+                line.x1 = p1.x;
+                line.x2 = p2.x;
+                line.y1 = p1.y;
+                line.y2 = p2.y;
+
                 const dy = line.y2 - line.y1;
+                const dx = line.x2 - line.x1;
+                const m = dy / dx; // slope of line 0
+                const b = line.y1 - m * line.x1; // y-intercept of line 0
+                const side = (dy * points[2].x) - (dx * points[2].y) + b;
                 const angle = Math.atan2(dy, dx) + Math.PI / 2.0; // perpendicular angle
-                // update the pt to be perpendicular to the line
-                pt.x = lines[1].x1 - Math.cos(angle) * Math.sqrt(Math.pow(pt.x - lines[1].x1, 2) + Math.pow(pt.y - lines[1].y1, 2));
-                pt.y = lines[1].y1 - Math.sin(angle) * Math.sqrt(Math.pow(pt.x - lines[1].x1, 2) + Math.pow(pt.y - lines[1].y1, 2));
+                const magnitude = Math.sqrt(Math.pow(pt.x - lines[1].x1, 2) + Math.pow(pt.y - lines[1].y1, 2));
+                const offsetX = Math.cos(angle) * magnitude;
+                const offsetY = Math.sin(angle) * magnitude;
+
+                if (side > 0) {
+                    if (pt.x > lines[1].x1) {
+                        pt.x = lines[1].x1 - offsetX;
+                        pt.y = lines[1].y1 - offsetY;
+                    }
+                    else {
+                        pt.x = lines[1].x1 + offsetX;
+                        pt.y = lines[1].y1 + offsetY;
+                    }
+                } else {
+                    if (pt.y > lines[1].y1) {
+                        pt.x = lines[1].x1 + offsetX;
+                        pt.y = lines[1].y1 + offsetY;
+                    }
+                    else {
+                        pt.x = lines[1].x1 - offsetX;
+                        pt.y = lines[1].y1 - offsetY;
+                    }
+                }
+
+
             }
 
             lines[lines.length - 1].x2 = pt.x;
@@ -155,6 +266,19 @@ function loadCanvas() {
             const mouseX = evt.clientX - rect.left;
             const mouseY = evt.clientY - rect.top;
             const pt = ctx.transformedPoint(mouseX, mouseY);
+
+            if (points.length === 3) {
+                const intersection = lineSegmentIntersection(
+                    { x: lines[0].x1, y: lines[0].y1 },
+                    { x: lines[0].x2, y: lines[0].y2 },
+                    { x: lines[1].x1, y: lines[1].y1 },
+                    { x: lines[1].x2, y: lines[1].y2 }
+                );
+                if (!intersection.intersect) {
+                    console.log("lines do not intersect");
+                    return;
+                }
+            }
 
             points.push({ x: pt.x, y: pt.y, idx: points.length });
             if (points.length % 2 === 1) {
