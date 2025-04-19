@@ -285,13 +285,13 @@ function loadCanvas() {
     const ctx = canvas.getContext('2d');
     trackTransforms(ctx); // Enable zoom and pan
     redraw(ctx); // Initial redraw
-    
+
     let lastX = canvas.width / 2;
     let lastY = canvas.height / 2;
     let dragStart = null;
     let dragged = false;
     const scaleFactor = 1.1;
-    
+
     /**
      * Handles the mousedown event for enabling panning.
      * Records the starting position of the drag.
@@ -566,6 +566,14 @@ function trackTransforms(ctx) {
     };
 
     const pt = svg.createSVGPoint();
+    const scaleX = canvas.width / gkhead.width;
+    const scaleY = canvas.height / gkhead.height;
+    ctx.setTransform(Math.min(scaleX, scaleY),
+        0,
+        0,
+        Math.min(scaleX, scaleY),
+        (canvas.width - gkhead.width * Math.min(scaleX, scaleY)) / 2,
+        (canvas.height - gkhead.height * Math.min(scaleX, scaleY)) / 2);
     ctx.transformedPoint = function (x, y) {
         pt.x = x; pt.y = y;
         return pt.matrixTransform(xform.inverse());
@@ -674,4 +682,5 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 window.onload = loadCanvas;
+
 gkhead.src = initialImage; // Set the initial image source
