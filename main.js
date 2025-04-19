@@ -55,7 +55,7 @@ function redraw(ctx) {
      * Clears the canvas area for redrawing.
      * @param {CanvasRenderingContext2D} ctx - The canvas rendering context.
      */
-    
+
     const p1 = ctx.transformedPoint(0, 0);
     const p2 = ctx.transformedPoint(canvas.width, canvas.height);
     ctx.clearRect(p1.x, p1.y, p2.x - p1.x, p2.y - p1.y);
@@ -72,7 +72,7 @@ function redraw(ctx) {
 
     ctx.drawImage(gkhead, 0, 0);
     ctx.save();
-    
+
     blobs.forEach(blob => {
         ctx.beginPath();
         ctx.moveTo(blob.line1.x1, blob.line1.y1);
@@ -101,7 +101,7 @@ function redraw(ctx) {
         const textMetricsLine2 = ctx.measureText(textLine2);
         const labelWidthLine1 = textMetricsLine1.width;
         const labelWidthLine2 = textMetricsLine2.width;
-        
+
         // Draw text near endpoints of line1
         const label1Pos = adjustLabelPosition(blob.line1.x2, blob.line1.y2, blob.line1, labelWidthLine1);
         ctx.fillText(textLine1, label1Pos.x, label1Pos.y);
@@ -110,7 +110,7 @@ function redraw(ctx) {
         const label2Pos = adjustLabelPosition(blob.line2.x2, blob.line2.y2, blob.line2, labelWidthLine2);
         ctx.fillText(textLine2, label2Pos.x, label2Pos.y);
     });
-    
+
     lines.forEach(line => {
         ctx.beginPath();
         ctx.moveTo(line.x1, line.y1);
@@ -120,7 +120,7 @@ function redraw(ctx) {
         ctx.stroke();
         ctx.closePath();
     });
-    
+
     points.forEach(point => {
         ctx.beginPath();
         ctx.arc(point.x, point.y, 5 / ctx.getTransform().a, 0, 2 * Math.PI); // Adjust size based on current scale
@@ -201,6 +201,31 @@ function lineSegmentIntersection(p1, q1, p2, q2) {
     return { intersect: false, point: null };
 }
 
+function isPointBetweenPerpendiculars(point, segmentStart, segmentEnd) {
+    // Handle the edge case where the segment is a single point.
+    if (segmentStart[0] === segmentEnd[0] && segmentStart[1] === segmentEnd[1]) {
+        return true; // Consider the point to be "between"
+    }
+
+    // Calculate the vector representing the line segment.
+    const segmentVector = [segmentEnd[0] - segmentStart[0], segmentEnd[1] - segmentStart[1]];
+
+    // Calculate the vector from the start point of the segment to the given point.
+    const pointToStartVector = [point[0] - segmentStart[0], point[1] - segmentStart[1]];
+
+    // Calculate the dot product of the segment vector and the vector from the start
+    // point to the given point.
+    const dot1 = segmentVector[0] * pointToStartVector[0] + segmentVector[1] * pointToStartVector[1];
+
+    // Calculate the vector from the end point of the segment to the given point.
+    const pointToEndVector = [point[0] - segmentEnd[0], point[1] - segmentEnd[1]];
+    // Calculate the dot product of the segment vector and the vector from the end point
+    // to the given point.  This is equivalent to dot2.
+    const dot2 = segmentVector[0] * pointToEndVector[0] + segmentVector[1] * pointToEndVector[1];
+    // The point is between the perpendiculars if the dot products have opposite signs.
+    return (dot1 <= 0 && dot2 >= 0) || (dot1 >= 0 && dot2 <= 0);
+}
+
 /**
  * Sets up the canvas for zooming, panning, and interaction.
  */
@@ -266,7 +291,7 @@ function loadCanvas() {
             // have a new xy where line index 1 is perpendicular to line index 0
             if (lines.length === 2) {
                 const line = lines[0];
-                
+
                 // get p1 and p2 where p1 is the lowest y value point
                 // and p2 is the highest y value point
                 const p1 = { x: line.x1, y: line.y1 };
@@ -328,6 +353,14 @@ function loadCanvas() {
             const mouseX = evt.clientX - rect.left;
             const mouseY = evt.clientY - rect.top;
             const pt = ctx.transformedPoint(mouseX, mouseY);
+
+            if (points.length === 2) {
+                const perpendicular = isPointBetweenPerpendiculars([pt.x, pt.y], [lines[0].x1, lines[0].y1], [lines[0].x2, lines[0].y2]);
+                if (!perpendicular) {
+                    console.log("point is not between perpendiculars");
+                    return;
+                }
+            }
 
             if (points.length === 3) {
                 const intersection = lineSegmentIntersection(
