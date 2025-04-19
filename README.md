@@ -6,7 +6,7 @@ tooling for fungal microscopy
 - [x] draw on canvas
 - [ ] spore mode
     - [x] allow for "sticky orthogonal" measuring of spores
-    - [ ] show spore measurements near the blob
+    - [x] show spore measurements near the blob
     - [ ] show spore measurements in a table
     - [ ] recalculating data table
     - [ ] scale bars

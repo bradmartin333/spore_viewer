@@ -470,7 +470,6 @@ function loadCanvas() {
      * @param {MouseEvent} evt - The contextmenu event object.
      */
     canvas.addEventListener('contextmenu', (evt) => {
-        evt.preventDefault(); // Prevent the default context menu from appearing
         const rect = canvas.getBoundingClientRect();
         const mouseX = evt.clientX - rect.left;
         const mouseY = evt.clientY - rect.top;
@@ -478,10 +477,11 @@ function loadCanvas() {
 
         // If points.length > 2 remove only the points beyond the first two and delete lines[1]
         if (points.length > 2) {
+            evt.preventDefault();
             points.splice(2);
             lines.splice(1, 1);
-        } else if (points.length > 0) {
-            // If there are less then 3 points, clear all points and lines
+        } else if (points.length > 0) { // If there are less then 3 points, clear all points and lines
+            evt.preventDefault();
             points.length = 0;
             lines.length = 0;
         }
@@ -490,6 +490,7 @@ function loadCanvas() {
         for (let i = blobs.length - 1; i >= 0; i--) {
             if (isPointBetweenPerpendiculars([pt.x, pt.y], [blobs[i].line1.x1, blobs[i].line1.y1], [blobs[i].line1.x2, blobs[i].line1.y2]) &&
                 isPointBetweenPerpendiculars([pt.x, pt.y], [blobs[i].line2.x1, blobs[i].line2.y1], [blobs[i].line2.x2, blobs[i].line2.y2])) {
+                evt.preventDefault();
                 blobs.splice(i, 1);
             }
         }
