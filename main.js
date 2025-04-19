@@ -640,6 +640,8 @@ document.addEventListener('DOMContentLoaded', function () {
      * Scales and centers the image on the canvas and triggers the initial redraw.
      */
     gkhead.onload = function () {
+        loadCanvas();
+
         const ctx = canvas.getContext('2d');
         const scaleX = canvas.width / gkhead.width;
         const scaleY = canvas.height / gkhead.height;
@@ -655,8 +657,9 @@ document.addEventListener('DOMContentLoaded', function () {
             lines.length = 0;
             blobs.length = 0;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            redraw(ctx);
         }
+        
+        redraw(ctx);
     };
 
     /**
@@ -668,10 +671,8 @@ document.addEventListener('DOMContentLoaded', function () {
     };
 });
 
-window.onload = loadCanvas;
-
 /**
  * Sets the initial source of the gkhead image.
  */
-const initialImage = "assets/spore_print.jpg";
+const initialImage = "test/spores/40x.png";
 gkhead.src = initialImage;
