@@ -15,6 +15,47 @@ const blobs = [];
  * @param {CanvasRenderingContext2D} ctx - The canvas rendering context.
  */
 function redraw(ctx) {
+    /**
+     * Calculates the Euclidean distance between two points.
+     * @param {number} x1 - The x-coordinate of the first point.
+     * @param {number} y1 - The y-coordinate of the first point.
+     * @param {number} x2 - The x-coordinate of the second point.
+     * @param {number} y2 - The y-coordinate of the second point.
+     * @returns {number} - The distance between the two points.
+     */
+    const distance = (x1, y1, x2, y2) => {
+        return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+    };
+
+    /**
+     * Adjusts the label position if it overlaps with existing lines or other labels.
+     * @param {number} x - The initial x-coordinate of the label.
+     * @param {number} y - The initial y-coordinate of the label.
+     * @param {object} line - The line object {x1, y1, x2, y2}.
+     * @param {number} labelWidth - The width of the label text.
+     * @returns {object} - The adjusted x and y coordinates of the label.
+     */
+    function adjustLabelPosition(x, y, line, labelWidth) {
+        const buffer = 10; // Buffer space from the line ends and other labels
+        let newX = x, newY = y;
+
+        // Check if label overlaps with line endpoints, adjust if necessary
+        if (Math.abs(x - line.x1) < buffer && Math.abs(y - line.y1) < buffer) {
+            newX = line.x1 + (line.x1 > line.x2 ? -labelWidth - buffer : buffer);
+            newY = line.y1 + (line.y1 > line.y2 ? -buffer : buffer);
+        } else if (Math.abs(x - line.x2) < buffer && Math.abs(y - line.y2) < buffer) {
+            newX = line.x2 + (line.x2 > line.x1 ? buffer : -labelWidth - buffer);
+            newY = line.y2 + (line.y2 > line.y1 ? buffer : -buffer);
+        }
+
+        return { x: newX, y: newY };
+    }
+
+    /**
+     * Clears the canvas area for redrawing.
+     * @param {CanvasRenderingContext2D} ctx - The canvas rendering context.
+     */
+    
     const p1 = ctx.transformedPoint(0, 0);
     const p2 = ctx.transformedPoint(canvas.width, canvas.height);
     ctx.clearRect(p1.x, p1.y, p2.x - p1.x, p2.y - p1.y);
@@ -47,6 +88,27 @@ function redraw(ctx) {
         ctx.lineWidth = 2 / ctx.getTransform().a;
         ctx.stroke();
         ctx.closePath();
+
+        // Display line lengths
+        const line1Length = distance(blob.line1.x1, blob.line1.y1, blob.line1.x2, blob.line1.y2);
+        const line2Length = distance(blob.line2.x1, blob.line2.y1, blob.line2.x2, blob.line2.y2);
+        ctx.font = '12px Arial';
+        ctx.fillStyle = 'black';
+
+        const textLine1 = `${line1Length.toFixed(2)} px`;
+        const textLine2 = `${line2Length.toFixed(2)} px`;
+        const textMetricsLine1 = ctx.measureText(textLine1);
+        const textMetricsLine2 = ctx.measureText(textLine2);
+        const labelWidthLine1 = textMetricsLine1.width;
+        const labelWidthLine2 = textMetricsLine2.width;
+        
+        // Draw text near endpoints of line1
+        const label1Pos = adjustLabelPosition(blob.line1.x2, blob.line1.y2, blob.line1, labelWidthLine1);
+        ctx.fillText(textLine1, label1Pos.x, label1Pos.y);
+
+        // Draw text near endpoints of line2
+        const label2Pos = adjustLabelPosition(blob.line2.x2, blob.line2.y2, blob.line2, labelWidthLine2);
+        ctx.fillText(textLine2, label2Pos.x, label2Pos.y);
     });
     
     lines.forEach(line => {
@@ -373,25 +435,23 @@ document.addEventListener('DOMContentLoaded', function () {
         alert("this website is made for use with a mouse and desktop and may not work correctly on your device");
     }
 
-    const modeToggle = document.getElementById('modeToggle');
+    const sporeMode = document.getElementById('sporeMode');
+    const scaleMode = document.getElementById('scaleMode');
     const openImageButton = document.getElementById('openImage');
     const imageInput = document.getElementById('imageInput');
 
-    let isSporeMode = true; // Start in spore mode
-
     // Toggle mode logic
-    modeToggle.addEventListener('click', function () {
-        if (isSporeMode) {
-            modeToggle.textContent = 'scale mode';
-            modeToggle.classList.remove('spore-mode');
-            modeToggle.classList.add('scale-mode');
-            isSporeMode = false;
-        } else {
-            modeToggle.textContent = 'spore mode';
-            modeToggle.classList.remove('scale-mode');
-            modeToggle.classList.add('spore-mode');
-            isSporeMode = true;
-        }
+    sporeMode.addEventListener('click', function () {
+        sporeMode.classList.remove('spore-mode-off');
+        sporeMode.classList.add('spore-mode-on');
+        scaleMode.classList.remove('scale-mode-on');
+        scaleMode.classList.add('scale-mode-off');
+    });
+    scaleMode.addEventListener('click', function () {
+        sporeMode.classList.remove('spore-mode-on');
+        sporeMode.classList.add('spore-mode-off');
+        scaleMode.classList.remove('scale-mode-off');
+        scaleMode.classList.add('scale-mode-on');
     });
 
     // Open image functionality

@@ -72,16 +72,24 @@ h1 {
     background-color: #a9b0b8;
 }
 
-.spore-mode {
+.spore-mode-on {
     background-color: #28A745;
+}
+
+.spore-mode-off {
+    background-color: #6c757d;
 }
 
 .spore-mode:hover {
     background-color: #1e7e34;
 }
 
-.scale-mode {
+.scale-mode-on {
     background-color: #007BFF;
+}
+
+.scale-mode-off {
+    background-color: #6c757d;
 }
 
 .scale-mode:hover {
