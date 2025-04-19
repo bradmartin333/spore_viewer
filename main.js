@@ -86,12 +86,11 @@ function redraw(ctx) {
     const offsetY = (canvas.height - gkhead.height * scale) / 2;
     ctx.setTransform(scale, 0, 0, scale, offsetX, offsetY);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.restore();
 
     // Draw the image
     ctx.drawImage(gkhead, 0, 0);
 
-    // Restore the context state to apply drawing for points and lines
-    ctx.restore();
     ctx.save(); // Save again for drawing elements with zoom/pan
 
     // Draw blobs (pairs of perpendicular lines)
