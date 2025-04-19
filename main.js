@@ -49,7 +49,10 @@ const distance = (x1, y1, x2, y2) => {
  * @returns {object} - The adjusted x and y coordinates of the label.
  */
 function adjustLabelPosition(x, y, line, labelWidth) {
-    const buffer = 10; // Buffer space from the line ends
+    const ctx = canvas.getContext('2d');
+    const zoom = ctx.getTransform().a; // Get the current zoom level
+    const buffer = 10 / zoom; // Adjust the buffer based on zoom level
+
     let newX = x;
     let newY = y;
 
@@ -116,7 +119,7 @@ function redraw(ctx) {
         // Display line lengths
         const line1Length = distance(blob.line1.x1, blob.line1.y1, blob.line1.x2, blob.line1.y2);
         const line2Length = distance(blob.line2.x1, blob.line2.y1, blob.line2.x2, blob.line2.y2);
-        ctx.font = '12px Arial';
+        ctx.font = `${12 / ctx.getTransform().a}px Arial`; // Adjust font size based on zoom
         ctx.fillStyle = 'black';
 
         const textLine1 = `${line1Length.toFixed(2)} px`;
@@ -612,7 +615,15 @@ document.addEventListener('DOMContentLoaded', function () {
         const offsetY = (canvas.height - gkhead.height * scale) / 2;
 
         ctx.setTransform(scale, 0, 0, scale, offsetX, offsetY);
-        redraw(ctx); // Redraw the canvas with the new image
+
+        // If this is a user-uploaded image, redraw and clear the canvas
+        if (!gkhead.src.endsWith(initialImage)) {
+            points.length = 0;
+            lines.length = 0;
+            blobs.length = 0;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            redraw(ctx);
+        }
     };
 
     /**
@@ -629,4 +640,5 @@ window.onload = loadCanvas;
 /**
  * Sets the initial source of the gkhead image.
  */
-gkhead.src = "assets/spore_print.jpg";
+const initialImage = "assets/spore_print.jpg";
+gkhead.src = initialImage;
