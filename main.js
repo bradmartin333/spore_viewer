@@ -464,6 +464,39 @@ function loadCanvas() {
         }
         dragged = false;
     }, false);
+
+    /**
+     * Handles the right-click event for clearing points, lines, and blobs.
+     * @param {MouseEvent} evt - The contextmenu event object.
+     */
+    canvas.addEventListener('contextmenu', (evt) => {
+        evt.preventDefault(); // Prevent the default context menu from appearing
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = evt.clientX - rect.left;
+        const mouseY = evt.clientY - rect.top;
+        const pt = ctx.transformedPoint(mouseX, mouseY);
+
+        // If points.length > 2 remove only the points beyond the first two and delete lines[1]
+        if (points.length > 2) {
+          points.splice(2);
+          lines.splice(1, 1);
+        } else if (points.length > 0){
+            // If there are less then 3 points, clear all points and lines
+            points.length = 0;
+            lines.length = 0;
+        }
+
+        // Check if the click is within any blob's diamond shape and remove the blob if it is
+        for (let i = blobs.length - 1; i >= 0; i--) {
+            if (isPointBetweenPerpendiculars([pt.x, pt.y], [blobs[i].line1.x1, blobs[i].line1.y1], [blobs[i].line1.x2, blobs[i].line1.y2]) &&
+                isPointBetweenPerpendiculars([pt.x, pt.y], [blobs[i].line2.x1, blobs[i].line2.y1], [blobs[i].line2.x2, blobs[i].line2.y2])) {
+                blobs.splice(i, 1);
+            }
+        }
+
+        // Redraw the canvas
+        redraw(ctx);
+    }, false);
 }
 
 /**
