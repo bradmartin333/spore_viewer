@@ -537,6 +537,9 @@ function trackTransforms(ctx) {
  * Sets up event listeners for mobile detection, mode toggling, and image loading.
  */
 document.addEventListener('DOMContentLoaded', function () {
+    const canvas = document.getElementById('image-canvas');
+    const ctx = canvas.getContext('2d');
+
     /**
      * Checks if the user agent indicates a mobile or tablet device.
      * @returns {boolean} - True if the device is mobile, false otherwise.
@@ -605,7 +608,6 @@ document.addEventListener('DOMContentLoaded', function () {
      * Scales and centers the image on the canvas and triggers the initial redraw.
      */
     gkhead.onload = function () {
-        const ctx = canvas.getContext('2d');
         const scaleX = canvas.width / gkhead.width;
         const scaleY = canvas.height / gkhead.height;
         const scale = Math.min(scaleX, scaleY);
@@ -613,7 +615,11 @@ document.addEventListener('DOMContentLoaded', function () {
         const offsetY = (canvas.height - gkhead.height * scale) / 2;
 
         ctx.setTransform(scale, 0, 0, scale, offsetX, offsetY);
-        redraw(ctx); // Redraw the canvas with the loaded image
+
+        trackTransforms(ctx);
+        redraw(ctx);
+
+        loadCanvas();
     };
 
     /**
@@ -624,12 +630,6 @@ document.addEventListener('DOMContentLoaded', function () {
         console.error("Failed to load image.");
     };
 });
-
-/**
- * Executes when the entire page has loaded, including all its resources.
- * Calls the loadCanvas function to set up the canvas interactions.
- */
-window.onload = loadCanvas;
 
 /**
  * Sets the initial source of the gkhead image.
