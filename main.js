@@ -478,9 +478,9 @@ function loadCanvas() {
 
         // If points.length > 2 remove only the points beyond the first two and delete lines[1]
         if (points.length > 2) {
-          points.splice(2);
-          lines.splice(1, 1);
-        } else if (points.length > 0){
+            points.splice(2);
+            lines.splice(1, 1);
+        } else if (points.length > 0) {
             // If there are less then 3 points, clear all points and lines
             points.length = 0;
             lines.length = 0;
@@ -494,7 +494,6 @@ function loadCanvas() {
             }
         }
 
-        // Redraw the canvas
         redraw(ctx);
     }, false);
 }
