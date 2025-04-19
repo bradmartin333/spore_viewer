@@ -46,6 +46,7 @@ h1 {
 }
 
 canvas {
+    margin-bottom: 2em;
     margin-top: var(--equal-spacing);
     display: block;
     margin-left: auto;
@@ -119,4 +120,26 @@ select:hover {
 
 .text-center {
     text-align: center;
+}
+
+footer {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+footer i {
+    color: black;
+    font-size: 1.5em;
+    padding: 0 10px;
+}
+
+footer .fa-house:hover {
+    color: var(--success-hover);
+    cursor: pointer;
+}
+
+footer .fa-github:hover {
+    color: var(--primary-hover);
+    cursor: pointer;
 }
