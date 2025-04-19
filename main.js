@@ -6,6 +6,11 @@ canvas.width = 800;
 canvas.height = 600;
 
 /**
+ * The initial source of the gkhead image.
+ */
+const initialImage = "start.png";
+
+/**
  * Creates a new Image object for the head image.
  */
 const gkhead = new Image();
@@ -280,13 +285,13 @@ function loadCanvas() {
     const ctx = canvas.getContext('2d');
     trackTransforms(ctx); // Enable zoom and pan
     redraw(ctx); // Initial redraw
-
+    
     let lastX = canvas.width / 2;
     let lastY = canvas.height / 2;
     let dragStart = null;
     let dragged = false;
     const scaleFactor = 1.1;
-
+    
     /**
      * Handles the mousedown event for enabling panning.
      * Records the starting position of the drag.
@@ -640,8 +645,6 @@ document.addEventListener('DOMContentLoaded', function () {
      * Scales and centers the image on the canvas and triggers the initial redraw.
      */
     gkhead.onload = function () {
-        loadCanvas();
-
         const ctx = canvas.getContext('2d');
         const scaleX = canvas.width / gkhead.width;
         const scaleY = canvas.height / gkhead.height;
@@ -657,9 +660,8 @@ document.addEventListener('DOMContentLoaded', function () {
             lines.length = 0;
             blobs.length = 0;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            redraw(ctx);
         }
-        
-        redraw(ctx);
     };
 
     /**
@@ -671,8 +673,5 @@ document.addEventListener('DOMContentLoaded', function () {
     };
 });
 
-/**
- * Sets the initial source of the gkhead image.
- */
-const initialImage = "test/spores/40x.png";
-gkhead.src = initialImage;
+window.onload = loadCanvas;
+gkhead.src = initialImage; // Set the initial image source
