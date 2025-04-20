@@ -42,7 +42,6 @@ h1 {
     padding: 20px;
     box-sizing: border-box;
     border: none;
-    /* Already no border by default, but can be explicit */
 }
 
 canvas {
@@ -86,13 +85,11 @@ select:hover {
 #openImage {
     background-color: var(--light-grey);
     color: black;
-    /* Explicitly set if inheritance is not desired */
 }
 
 #openImage:hover {
     background-color: var(--light-grey-hover);
     color: black;
-    /* Explicitly set if inheritance is not desired */
 }
 
 .spore-mode-on {

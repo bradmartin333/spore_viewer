@@ -34,6 +34,12 @@ const lines = [];
 const blobs = [];
 
 /**
+ * Array to store the user calibrations. Each calibration is a combination
+ * of a line segment pixel count and a true measurement in micrometers.
+ */
+const calibrations = [];
+
+/**
  * Calculates the Euclidean distance between two points.
  * @param {number} x1 - The x-coordinate of the first point.
  * @param {number} y1 - The y-coordinate of the first point.
@@ -44,6 +50,15 @@ const blobs = [];
 const distance = (x1, y1, x2, y2) => {
     return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
 };
+
+/**
+ * Returns the state of calibration mode.
+ * @returns {boolean} - True if calibration mode is active, false otherwise.
+ */
+const isCalibrationMode = () => {
+    const scaleMode = document.getElementById('scaleMode');
+    return scaleMode.classList.contains('scale-mode-on');
+}
 
 /**
  * Adjusts the label position to prevent overlap with line endpoints.
@@ -158,7 +173,7 @@ function redraw(ctx) {
     points.forEach(point => {
         ctx.beginPath();
         ctx.arc(point.x, point.y, 5 / ctx.getTransform().a, 0, 2 * Math.PI); // Adjust radius based on zoom
-        ctx.fillStyle = point.idx > 1 ? 'green' : 'red'; // First two points are red, others green
+        ctx.fillStyle = isCalibrationMode() ? 'yellow' : point.idx > 1 ? 'green' : 'red';
         ctx.fill();
         ctx.closePath();
     });
@@ -462,6 +477,50 @@ function loadCanvas() {
                 points.length = 0;
             }
 
+            // If in scale mode, prompt the user for text entry after the second point
+            if (points.length === 2 && isCalibrationMode()) {
+                let measurement = 0;
+                while (true) {
+                    measurement = prompt("Enter the true measurment for this segment (Units = µm)", "");
+                    if (measurement && isNaN(measurement)) {
+                        alert("Please enter a valid number for the measurement.");
+                    } else {
+                        break;
+                    }
+                }
+
+                if (measurement) {
+                    while (true) {
+                        const calibration = prompt("Enter the name for this calibration", "");
+                        if (calibration && calibration.length > 0) {
+                            // Check if the calibration name already exists
+                            const existingCalibrations = JSON.parse(localStorage.getItem('calibrations')) || [];
+                            const calibrationExists = existingCalibrations.some(cal => cal.name === calibration);
+                            if (calibrationExists) {
+                                alert("This calibration name already exists. Please choose a different name.");
+                            } else {
+                                // Add the calibration and store all calibrations to local storage
+                                const rawLineLength = distance(lines[0].x1, lines[0].y1, lines[0].x2, lines[0].y2);
+                                // Round the line length to 2 decimal places
+                                const lineLength = Math.round(lineLength * 100) / 100;
+                                const trueLength = parseFloat(measurement);
+                                const calibrationData = { lineLength, trueLength, name: calibration };
+                                calibrations.push(calibrationData);
+                                localStorage.setItem('calibrations', JSON.stringify(calibrations));
+                                alert(`${calibrationData.name} calibration added: ${calibrationData.lineLength}px = ${calibrationData.trueLength}µm`);
+                                break;
+                            }
+                        } else {
+                            break; // Exit if no name is provided
+                        }
+                    }
+                }
+
+                // Clear the calibration points
+                points.length = 0;
+                lines.length = 0;
+            }
+
             redraw(ctx);
 
             const message = JSON.stringify({ x: pt.x, y: pt.y });
@@ -622,6 +681,12 @@ document.addEventListener('DOMContentLoaded', function () {
         sporeMode.classList.add('spore-mode-off');
         scaleMode.classList.remove('scale-mode-off');
         scaleMode.classList.add('scale-mode-on');
+
+        // Clear points and lines when switching to scale mode
+        points.length = 0;
+        lines.length = 0;
+        const ctx = canvas.getContext('2d');
+        redraw(ctx);
     });
 
     /**
