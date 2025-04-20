@@ -191,6 +191,49 @@ function redraw(ctx) {
         ctx.closePath();
     });
 
+    // Scale bar
+    const insetX = 10;
+    const insetY = 10;
+    const pt = ctx.transformedPoint(insetX, canvas.height - insetY);
+    let scaleBarLength = 100.0 / ctx.getTransform().a;
+    const activeCalibration = localStorage.getItem('activeCalibration');
+    if (activeCalibration) {
+        const calibration = calibrations.find(cal => cal.name === activeCalibration);
+        if (calibration) {
+            const pxPerMicron = calibration.value;
+            scaleBarLength /= pxPerMicron; // Convert to micrometers
+        }
+    }
+
+    // If the scale bar length is greater than 10, 
+    // round it to the nearest multiple of 10.
+    if (scaleBarLength > 10) {
+        scaleBarLength = Math.round(scaleBarLength / 10) * 10;
+    } else {
+        scaleBarLength = Math.round(scaleBarLength);
+    }
+
+    // Draw the scale bar
+    ctx.beginPath();
+    ctx.moveTo(pt.x, pt.y);
+    ctx.lineTo(pt.x + scaleBarLength, pt.y);
+    ctx.strokeStyle = 'black';
+    ctx.lineWidth = 5 / ctx.getTransform().a;
+    ctx.stroke();
+    ctx.closePath();
+
+    // Draw scale bar text aligned in the center of the scale bar horizontally
+    ctx.font = `${12 / ctx.getTransform().a}px Arial`;
+    ctx.fillStyle = 'black';
+    const scaleText = `${scaleBarLength} ${activeCalibration ? 'µm' : 'px'}`;
+    const textMetrics = ctx.measureText(scaleText);
+    const labelWidth = textMetrics.width;
+    const labelPos = {
+        x: pt.x + scaleBarLength / 2 - labelWidth / 2,
+        y: pt.y - 7 / ctx.getTransform().a
+    };
+    ctx.fillText(scaleText, labelPos.x, labelPos.y);
+
     // Restore the context state
     ctx.restore();
 }

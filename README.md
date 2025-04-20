@@ -4,14 +4,17 @@ tooling for fungal microscopy
 
 - [x] open images in pan/zoom canvas
 - [x] draw on canvas
+- [ ] allow for user to set canvas background color
 - [ ] spore mode
     - [x] save screenshot of canvas
     - [x] allow for "sticky orthogonal" measuring of spores
     - [x] show spore measurements near the blob
     - [ ] show spore measurements in a table
     - [ ] recalculating data table
-    - [ ] scale bars
     - [ ] custom text entry area
+    - [ ] scale bar
+        - [x] show scale bar on canvas
+        - [ ] allow for user to set scale bar color
 - [x] scale mode
     - [x] USAF target calibration (UI for AB point with calibrated distance)
     - [x] select from loaded calibrations
