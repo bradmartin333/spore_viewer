@@ -12,19 +12,16 @@
 </head>
 
 <body>
-    <h1 class="text-center">spore viewer</h1>
-    <div class="container">
-        <button id="openImage">open image</button>
+    <div class="toolbar">
+        <button id="openImage"><i class="fa-solid fa-image"></i></button>
         <input type="file" id="imageInput" accept="image/*" style="display: none;" />
         <button id="sporeMode" class="spore-mode-on">spore mode</button>
         <button id="scaleMode" class="scale-mode-off">scale mode</button>
-    </div>
-    <div class="container">
         <select id="calibrationSelect" class="calibration-select">
             <option value="" selected>no calibration</option>
         </select>
-        <button id="reset" class="reset-button">reset</button>
-        <button id="help" class="help-button">help</button>
+        <button id="reset" class="reset-button"><i class="fa-solid fa-trash"></i></button>
+        <button id="help" class="help-button"><i class="fa-solid fa-question"></i></button>
     </div>
     <canvas id="image-canvas"></canvas>
     <script src="main.js"></script>

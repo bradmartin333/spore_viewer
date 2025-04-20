@@ -1,7 +1,8 @@
 :root {
     --equal-spacing: 0px;
-    --button-width: 10em;
-    --button-padding: 10px 20px;
+    --button-height: 2.5em;
+    --button-width: 3.5em;
+    --button-padding: 0.5em;
     --button-font-size: 16px;
     --border-radius: 5px;
     --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -9,6 +10,8 @@
     --neutral-grey: #6c757d;
     --light-grey: #bfc7d0;
     --light-grey-hover: #a9b0b8;
+    --light-red: #df747e;
+    --light-purple: #906bd6;
     --success-color: #28A745;
     --success-hover: #1e7e34;
     --primary-color: #007BFF;
@@ -32,13 +35,18 @@ h1 {
     text-align: center;
 }
 
-.container {
+.toolbar {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
-    margin: 0 auto var(--equal-spacing);
-    width: 80%;
-    max-width: 800px;
+    gap: 1em;
+    margin: 0 auto;
+    max-width: 80em;
+    width: auto;
+    min-width: fit-content;
+    max-height: var(--button-height);
+    margin-top: 1em;
+    margin-bottom: 1em;
     padding: 20px;
     box-sizing: border-box;
     border: none;
@@ -57,12 +65,14 @@ canvas {
 
 button,
 select {
-    width: var(--button-width);
+    height: var(--button-height);
     padding: var(--button-padding);
     font-size: var(--button-font-size);
     border: none;
     border-radius: var(--border-radius);
     box-shadow: var(--box-shadow);
+    width: auto;
+    min-width: 0;
     cursor: pointer;
     transition: var(--transition);
 }
@@ -76,6 +86,17 @@ select {
     color: black;
     text-align: center;
     text-align-last: center;
+}
+
+.toolbar button {
+    width: var(--button-width);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.toolbar .fa-solid {
+    font-size: 1.5em;
 }
 
 select:hover {
@@ -98,7 +119,7 @@ select:hover {
 }
 
 #reset:hover {
-    background-color: var(--light-grey-hover);
+    background-color: var(--light-red);
     color: black;
 }
 
@@ -108,7 +129,7 @@ select:hover {
 }
 
 #help:hover {
-    background-color: var(--light-grey-hover);
+    background-color: var(--light-purple);
     color: black;
 }
 
