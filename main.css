@@ -7,7 +7,6 @@
     --border-radius: 5px;
     --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     --transition: all 0.3s ease;
-    --neutral-grey: #6c757d;
     --light-grey: #bfc7d0;
     --light-grey-hover: #a9b0b8;
     --light-red: #df747e;
@@ -77,13 +76,8 @@ select {
     transition: var(--transition);
 }
 
-button {
-    color: var(--white-color);
-}
-
 select {
     background-color: var(--light-grey);
-    color: black;
     text-align: center;
     text-align-last: center;
 }
@@ -103,34 +97,24 @@ select:hover {
     background-color: var(--light-grey-hover);
 }
 
-#openImage {
-    background-color: var(--light-grey);
-    color: black;
-}
-
 #openImage:hover {
     background-color: var(--light-grey-hover);
-    color: black;
 }
 
-#reset {
-    background-color: var(--light-grey);
-    color: black;
+#upload:hover {
+    background-color: var(--light-grey-hover);
+}
+
+#download:hover {
+    background-color: var(--light-grey-hover);
 }
 
 #reset:hover {
     background-color: var(--light-red);
-    color: black;
-}
-
-#help {
-    background-color: var(--light-grey);
-    color: black;
 }
 
 #help:hover {
     background-color: var(--light-purple);
-    color: black;
 }
 
 .spore-mode-on {
@@ -138,7 +122,7 @@ select:hover {
 }
 
 .spore-mode-off {
-    background-color: var(--neutral-grey);
+    background-color: var(--light-grey);
 }
 
 .spore-mode:hover {
@@ -150,7 +134,7 @@ select:hover {
 }
 
 .scale-mode-off {
-    background-color: var(--neutral-grey);
+    background-color: var(--light-grey);
 }
 
 .scale-mode:hover {

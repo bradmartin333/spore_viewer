@@ -719,6 +719,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const scaleMode = document.getElementById('scaleMode');
     const openImageButton = document.getElementById('openImage');
     const imageInput = document.getElementById('imageInput');
+    const uploadButton = document.getElementById('upload');
+    const uploadInput = document.getElementById('uploadInput');
+    const downloadButton = document.getElementById('download');
     const resetButton = document.getElementById('reset');
     const helpButton = document.getElementById('help');
 
@@ -772,6 +775,69 @@ document.addEventListener('DOMContentLoaded', function () {
             };
             reader.readAsDataURL(file); // Read the file as a data URL
         }
+    });
+
+    /** Event listener for the 'upload' button.
+     * Prompts the user to select a file and reads its contents.
+     * Parses the JSON data and updates the calibrations array and local storage.
+     * @param {Event} event - The click event object.
+     */
+    uploadButton.addEventListener('click', () => {
+        uploadInput.click(); // Programmatically click the file input
+    });
+
+    /**
+     * Event listener for changes to the upload input element.
+     * Reads the selected file and updates the calibrations array and local storage.
+     * @param {Event} event - The change event object.
+     * */
+    uploadInput.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (Array.isArray(data)) {
+                        calibrations.length = 0; // Clear existing calibrations
+                        calibrations.push(...data); // Add new calibrations
+                        localStorage.setItem('calibrations', JSON.stringify(calibrations)); // Update local storage
+                        alert("Calibrations uploaded successfully.");
+
+                        // Update the dropdown with the new calibrations
+                        const calibrationSelect = document.getElementById('calibrationSelect');
+                        calibrations.forEach(calibration => {
+                            const option = document.createElement('option');
+                            option.value = calibration.name;
+                            option.textContent = `${calibration.name} (${calibration.value}px/µm)`;
+                            calibrationSelect.appendChild(option);
+                        });
+                    } else {
+                        alert("Invalid file format. Please upload a valid JSON file.");
+                    }
+                } catch (error) {
+                    alert("Error reading file: " + error.message);
+                }
+            };
+            reader.readAsText(file); // Read the file as text
+        }
+    });
+
+    /** Event listener for the 'download' button.
+     * Creates a JSON file from the calibrations array and triggers a download.
+     * @param {Event} event - The click event object.
+     * */
+    downloadButton.addEventListener('click', () => {
+        const dataStr = JSON.stringify(calibrations, null, 2); // Convert calibrations to JSON string
+        const blob = new Blob([dataStr], { type: 'application/json' }); // Create a Blob from the JSON string
+        const url = URL.createObjectURL(blob); // Create a URL for the Blob
+
+        const a = document.createElement('a'); // Create an anchor element
+        a.href = url; // Set the href to the Blob URL
+        a.download = 'calibrations.json'; // Set the download attribute with a filename
+        document.body.appendChild(a); // Append the anchor to the body
+        a.click(); // Programmatically click the anchor to trigger the download
+        document.body.removeChild(a); // Remove the anchor from the DOM
     });
 
     /** Event listener for the 'reset' button.
