@@ -40,6 +40,11 @@ const blobs = [];
 const calibrations = [];
 
 /**
+ * Data string to diplay on the canvas.
+ */
+const dataString = "";
+
+/**
  * Calculates the Euclidean distance between two points.
  * @param {number} x1 - The x-coordinate of the first point.
  * @param {number} y1 - The y-coordinate of the first point.
@@ -199,9 +204,10 @@ function redraw(ctx) {
     }
 
     // Scale bar
+    const barColor = localStorage.getItem('barColor') || 'black';
     const insetX = 10;
     const insetY = 10;
-    const pt = ctx.transformedPoint(insetX, canvas.height - insetY);
+    const bottomLeft = ctx.transformedPoint(insetX, canvas.height - insetY);
     let scaleBarLength = 100.0 / ctx.getTransform().a;
     const activeCalibration = localStorage.getItem('activeCalibration');
     if (activeCalibration) {
@@ -219,28 +225,53 @@ function redraw(ctx) {
         } else {
             scaleBarLength = Math.round(scaleBarLength);
         }
-    
+        
         // Draw the scale bar
         ctx.beginPath();
-        ctx.moveTo(pt.x, pt.y);
-        ctx.lineTo(pt.x + scaleBarLength, pt.y);
-        ctx.strokeStyle = localStorage.getItem('barColor') || 'black';
+        ctx.moveTo(bottomLeft.x, bottomLeft.y);
+        ctx.lineTo(bottomLeft.x + scaleBarLength, bottomLeft.y);
+        ctx.strokeStyle = barColor;
         ctx.lineWidth = 5 / ctx.getTransform().a;
         ctx.stroke();
         ctx.closePath();
-    
+        
         // Draw scale bar text aligned in the center of the scale bar horizontally
         ctx.font = `bold ${12 / ctx.getTransform().a}px Arial`;
-        ctx.fillStyle = localStorage.getItem('barColor') || 'black';
+        ctx.fillStyle = barColor;
         const scaleText = `${scaleBarLength} ${activeCalibration ? 'µm' : 'px'}`;
         const textMetrics = ctx.measureText(scaleText);
         const labelWidth = textMetrics.width;
         const labelPos = {
-            x: pt.x + scaleBarLength / 2 - labelWidth / 2,
-            y: pt.y - 7 / ctx.getTransform().a
+            x: bottomLeft.x + scaleBarLength / 2 - labelWidth / 2,
+            y: bottomLeft.y - 7 / ctx.getTransform().a
         };
         ctx.fillText(scaleText, labelPos.x, labelPos.y);
     }
+    
+    // Draw the data string
+    const bottomRight = ctx.transformedPoint(canvas.width - insetX, canvas.height - insetY);
+    ctx.font = `bold ${12 / ctx.getTransform().a}px Arial`;
+    ctx.fillStyle = 'black';
+    const dataLines = dataString.split('\n');
+    dataLines.reverse();
+    const longestLine = dataLines.reduce((a, b) => a.length > b.length ? a : b, '');
+    const textMetrics = ctx.measureText(longestLine);
+    const labelWidth = textMetrics.width;
+    const labelPos = {
+        x: bottomRight.x - labelWidth - 10 / ctx.getTransform().a,
+        y: bottomRight.y - 10 / ctx.getTransform().a
+    };
+    ctx.fillStyle = canvasColor;
+    ctx.globalAlpha = 0.5;
+    ctx.fillRect(labelPos.x - 5 / ctx.getTransform().a,
+        labelPos.y - 15 / ctx.getTransform().a * dataLines.length,
+        labelWidth + 10 / ctx.getTransform().a,
+        16 / ctx.getTransform().a * dataLines.length);
+    ctx.globalAlpha = 1.0;
+    ctx.fillStyle = barColor;
+    dataLines.forEach((line, index) => {
+        ctx.fillText(line, labelPos.x, labelPos.y - index * 15 / ctx.getTransform().a);
+    });
 
     // Restore the context state
     ctx.restore();
