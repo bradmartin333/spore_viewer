@@ -109,6 +109,11 @@ function redraw(ctx) {
     const offsetY = (canvas.height - gkhead.height * scale) / 2;
     ctx.setTransform(scale, 0, 0, scale, offsetX, offsetY);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Fill the entire canvas with the selected color
+    const canvasColor = localStorage.getItem('canvasColor') || '#ffffff';
+    ctx.fillStyle = canvasColor;
+    ctx.fillRect(-canvas.width, -canvas.height, canvas.width * 3, canvas.height * 3);
     ctx.restore();
 
     // Draw the image
@@ -217,14 +222,14 @@ function redraw(ctx) {
     ctx.beginPath();
     ctx.moveTo(pt.x, pt.y);
     ctx.lineTo(pt.x + scaleBarLength, pt.y);
-    ctx.strokeStyle = 'black';
+    ctx.strokeStyle = localStorage.getItem('barColor') || 'black';
     ctx.lineWidth = 5 / ctx.getTransform().a;
     ctx.stroke();
     ctx.closePath();
 
     // Draw scale bar text aligned in the center of the scale bar horizontally
-    ctx.font = `${12 / ctx.getTransform().a}px Arial`;
-    ctx.fillStyle = 'black';
+    ctx.font = `bold ${12 / ctx.getTransform().a}px Arial`;
+    ctx.fillStyle = localStorage.getItem('barColor') || 'black';
     const scaleText = `${scaleBarLength} ${activeCalibration ? 'µm' : 'px'}`;
     const textMetrics = ctx.measureText(scaleText);
     const labelWidth = textMetrics.width;
@@ -401,6 +406,14 @@ function loadCanvas() {
         const ctx = canvas.getContext('2d');
         redraw(ctx);
     });
+
+    // Set the color of the color inputs to the current values in local storage.
+    const storedCanvasColor = localStorage.getItem('canvasColor') || '#ffffff';
+    const storedBarColor = localStorage.getItem('barColor') || '#000000';
+    const canvasColorInput = document.getElementById('canvasColor');
+    const barColorInput = document.getElementById('barColor');
+    canvasColorInput.value = storedCanvasColor;
+    barColorInput.value = storedBarColor;
 
     /**
      * Handles the mousedown event for enabling panning.
@@ -766,6 +779,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const uploadInput = document.getElementById('uploadInput');
     const downloadButton = document.getElementById('download');
     const resetButton = document.getElementById('reset');
+    const canvasColor = document.getElementById('canvasColor');
+    const barColor = document.getElementById('barColor');
 
     /**
      * Event listener for the 'sporeMode' button.
@@ -892,8 +907,33 @@ document.addEventListener('DOMContentLoaded', function () {
         if (confirmReset) {
             localStorage.removeItem('calibrations');
             localStorage.removeItem('activeCalibration');
+            localStorage.removeItem('canvasColor');
+            localStorage.removeItem('barColor');
             location.reload();
         }
+    });
+
+    /** Event listener for the 'canvasColor' input element.
+     * Updates the canvas background color based on the selected value.
+     * @param {Event} event - The input event object.
+     * */
+    canvasColor.addEventListener('input', (event) => {
+        const color = event.target.value;
+        localStorage.setItem('canvasColor', color);
+        canvas.style.backgroundColor = color;
+        const ctx = canvas.getContext('2d');
+        redraw(ctx);
+    });
+
+    /** Event listener for the 'barColor' input element.
+     * Updates the scale bar color based on the selected value.
+     * @param {Event} event - The input event object.
+     * */
+    barColor.addEventListener('input', (event) => {
+        const color = event.target.value;
+        localStorage.setItem('barColor', color);
+        const ctx = canvas.getContext('2d');
+        redraw(ctx);
     });
 
     /**
