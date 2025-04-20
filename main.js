@@ -211,35 +211,36 @@ function redraw(ctx) {
             scaleBarLength /= pxPerMicron; // Convert to micrometers
         }
     }
-
-    // If the scale bar length is greater than 10, 
-    // round it to the nearest multiple of 10.
-    if (scaleBarLength > 10) {
-        scaleBarLength = Math.round(scaleBarLength / 10) * 10;
-    } else {
-        scaleBarLength = Math.round(scaleBarLength);
+    if (scaleBarLength >= 1) {
+        // If the scale bar length is greater than 10, 
+        // round it to the nearest multiple of 10.
+        if (scaleBarLength > 10) {
+            scaleBarLength = Math.round(scaleBarLength / 10) * 10;
+        } else {
+            scaleBarLength = Math.round(scaleBarLength);
+        }
+    
+        // Draw the scale bar
+        ctx.beginPath();
+        ctx.moveTo(pt.x, pt.y);
+        ctx.lineTo(pt.x + scaleBarLength, pt.y);
+        ctx.strokeStyle = localStorage.getItem('barColor') || 'black';
+        ctx.lineWidth = 5 / ctx.getTransform().a;
+        ctx.stroke();
+        ctx.closePath();
+    
+        // Draw scale bar text aligned in the center of the scale bar horizontally
+        ctx.font = `bold ${12 / ctx.getTransform().a}px Arial`;
+        ctx.fillStyle = localStorage.getItem('barColor') || 'black';
+        const scaleText = `${scaleBarLength} ${activeCalibration ? 'µm' : 'px'}`;
+        const textMetrics = ctx.measureText(scaleText);
+        const labelWidth = textMetrics.width;
+        const labelPos = {
+            x: pt.x + scaleBarLength / 2 - labelWidth / 2,
+            y: pt.y - 7 / ctx.getTransform().a
+        };
+        ctx.fillText(scaleText, labelPos.x, labelPos.y);
     }
-
-    // Draw the scale bar
-    ctx.beginPath();
-    ctx.moveTo(pt.x, pt.y);
-    ctx.lineTo(pt.x + scaleBarLength, pt.y);
-    ctx.strokeStyle = localStorage.getItem('barColor') || 'black';
-    ctx.lineWidth = 5 / ctx.getTransform().a;
-    ctx.stroke();
-    ctx.closePath();
-
-    // Draw scale bar text aligned in the center of the scale bar horizontally
-    ctx.font = `bold ${12 / ctx.getTransform().a}px Arial`;
-    ctx.fillStyle = localStorage.getItem('barColor') || 'black';
-    const scaleText = `${scaleBarLength} ${activeCalibration ? 'µm' : 'px'}`;
-    const textMetrics = ctx.measureText(scaleText);
-    const labelWidth = textMetrics.width;
-    const labelPos = {
-        x: pt.x + scaleBarLength / 2 - labelWidth / 2,
-        y: pt.y - 7 / ctx.getTransform().a
-    };
-    ctx.fillText(scaleText, labelPos.x, labelPos.y);
 
     // Restore the context state
     ctx.restore();
