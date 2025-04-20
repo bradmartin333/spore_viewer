@@ -34,6 +34,12 @@ const lines = [];
 const blobs = [];
 
 /**
+ * Array to store the user calibrations. Each calibration is a combination
+ * of a line segment pixel count and a true measurement in micrometers.
+ */
+const calibrations = [];
+
+/**
  * Calculates the Euclidean distance between two points.
  * @param {number} x1 - The x-coordinate of the first point.
  * @param {number} y1 - The y-coordinate of the first point.
@@ -44,6 +50,15 @@ const blobs = [];
 const distance = (x1, y1, x2, y2) => {
     return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
 };
+
+/**
+ * Returns the state of calibration mode.
+ * @returns {boolean} - True if calibration mode is active, false otherwise.
+ */
+const isCalibrationMode = () => {
+    const scaleMode = document.getElementById('scaleMode');
+    return scaleMode.classList.contains('scale-mode-on');
+}
 
 /**
  * Adjusts the label position to prevent overlap with line endpoints.
@@ -94,6 +109,11 @@ function redraw(ctx) {
     const offsetY = (canvas.height - gkhead.height * scale) / 2;
     ctx.setTransform(scale, 0, 0, scale, offsetX, offsetY);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Fill the entire canvas with the selected color
+    const canvasColor = localStorage.getItem('canvasColor') || '#ffffff';
+    ctx.fillStyle = canvasColor;
+    ctx.fillRect(-canvas.width, -canvas.height, canvas.width * 3, canvas.height * 3);
     ctx.restore();
 
     // Draw the image
@@ -122,13 +142,26 @@ function redraw(ctx) {
         ctx.closePath();
 
         // Display line lengths
-        const line1Length = distance(blob.line1.x1, blob.line1.y1, blob.line1.x2, blob.line1.y2);
-        const line2Length = distance(blob.line2.x1, blob.line2.y1, blob.line2.x2, blob.line2.y2);
+        let line1Length = distance(blob.line1.x1, blob.line1.y1, blob.line1.x2, blob.line1.y2);
+        let line2Length = distance(blob.line2.x1, blob.line2.y1, blob.line2.x2, blob.line2.y2);
+        let units = 'px';
         ctx.font = `${12 / ctx.getTransform().a}px Arial`; // Adjust font size based on zoom
         ctx.fillStyle = 'black';
 
-        const textLine1 = `${line1Length.toFixed(2)} px`;
-        const textLine2 = `${line2Length.toFixed(2)} px`;
+        // If an active calibration is selected, convert the lengths to micrometers
+        const activeCalibration = localStorage.getItem('activeCalibration');
+        if (activeCalibration) {
+            const calibration = calibrations.find(cal => cal.name === activeCalibration);
+            if (calibration) {
+                const pxPerMicron = calibration.value;
+                line1Length /= pxPerMicron;
+                line2Length /= pxPerMicron;
+                units = 'µm';
+            }
+        }
+
+        const textLine1 = `${line1Length.toFixed(2)} ${units}`;
+        const textLine2 = `${line2Length.toFixed(2)} ${units}`;
         const textMetricsLine1 = ctx.measureText(textLine1);
         const textMetricsLine2 = ctx.measureText(textLine2);
         const labelWidthLine1 = textMetricsLine1.width;
@@ -155,13 +188,59 @@ function redraw(ctx) {
     });
 
     // Draw points
-    points.forEach(point => {
+    if (!isCalibrationMode()) {
+        points.forEach(point => {
+            ctx.beginPath();
+            ctx.arc(point.x, point.y, 5 / ctx.getTransform().a, 0, 2 * Math.PI); // Adjust radius based on zoom
+            ctx.fillStyle = point.idx > 1 ? 'green' : 'red';
+            ctx.fill();
+            ctx.closePath();
+        });
+    }
+
+    // Scale bar
+    const insetX = 10;
+    const insetY = 10;
+    const pt = ctx.transformedPoint(insetX, canvas.height - insetY);
+    let scaleBarLength = 100.0 / ctx.getTransform().a;
+    const activeCalibration = localStorage.getItem('activeCalibration');
+    if (activeCalibration) {
+        const calibration = calibrations.find(cal => cal.name === activeCalibration);
+        if (calibration) {
+            const pxPerMicron = calibration.value;
+            scaleBarLength /= pxPerMicron; // Convert to micrometers
+        }
+    }
+    if (scaleBarLength >= 1) {
+        // If the scale bar length is greater than 10, 
+        // round it to the nearest multiple of 10.
+        if (scaleBarLength > 10) {
+            scaleBarLength = Math.round(scaleBarLength / 10) * 10;
+        } else {
+            scaleBarLength = Math.round(scaleBarLength);
+        }
+    
+        // Draw the scale bar
         ctx.beginPath();
-        ctx.arc(point.x, point.y, 5 / ctx.getTransform().a, 0, 2 * Math.PI); // Adjust radius based on zoom
-        ctx.fillStyle = point.idx > 1 ? 'green' : 'red'; // First two points are red, others green
-        ctx.fill();
+        ctx.moveTo(pt.x, pt.y);
+        ctx.lineTo(pt.x + scaleBarLength, pt.y);
+        ctx.strokeStyle = localStorage.getItem('barColor') || 'black';
+        ctx.lineWidth = 5 / ctx.getTransform().a;
+        ctx.stroke();
         ctx.closePath();
-    });
+    
+        // Draw scale bar text aligned in the center of the scale bar horizontally
+        ctx.font = `bold ${12 / ctx.getTransform().a}px Arial`;
+        ctx.fillStyle = localStorage.getItem('barColor') || 'black';
+        const scaleText = `${scaleBarLength} ${activeCalibration ? 'µm' : 'px'}`;
+        const textMetrics = ctx.measureText(scaleText);
+        const labelWidth = textMetrics.width;
+        const labelPos = {
+            x: pt.x + scaleBarLength / 2 - labelWidth / 2,
+            y: pt.y - 7 / ctx.getTransform().a
+        };
+        ctx.fillText(scaleText, labelPos.x, labelPos.y);
+    }
 
     // Restore the context state
     ctx.restore();
@@ -291,6 +370,53 @@ function loadCanvas() {
     let dragStart = null;
     let dragged = false;
     const scaleFactor = 1.1;
+
+    // Load and populate the calibrations from local storage.
+    // If no calibrations are found, initialize an empty array.
+    const storedCalibrations = localStorage.getItem('calibrations');
+    if (storedCalibrations) {
+        const parsedCalibrations = JSON.parse(storedCalibrations);
+        calibrations.push(...parsedCalibrations);
+    } else {
+        localStorage.setItem('calibrations', JSON.stringify(calibrations));
+    }
+    // Update the drop down
+    const calibrationSelect = document.getElementById('calibrationSelect');
+    calibrations.forEach(calibration => {
+        const option = document.createElement('option');
+        option.value = calibration.name;
+        option.textContent = `${calibration.name} (${calibration.value} px/µm)`;
+        calibrationSelect.appendChild(option);
+    });
+    // If local storage contains the value 'activeCalibration', set the selected option in the dropdown to that value.
+    const activeCalibration = localStorage.getItem('activeCalibration');
+    if (activeCalibration) {
+        const optionToSelect = Array.from(calibrationSelect.options).find(option => option.value === activeCalibration);
+        if (optionToSelect) {
+            optionToSelect.selected = true;
+        }
+    }
+    // Add an event listener to update the active calibration in local storage when the dropdown value changes.
+    calibrationSelect.addEventListener('change', () => {
+        const selectedCalibration = calibrationSelect.value;
+        // If the selected calibration is item 0, clear the active calibration in local storage.
+        if (selectedCalibration === '0') {
+            localStorage.removeItem('activeCalibration');
+        } else {
+            localStorage.setItem('activeCalibration', selectedCalibration);
+        }
+        // Redraw the canvas to reflect the new calibration.
+        const ctx = canvas.getContext('2d');
+        redraw(ctx);
+    });
+
+    // Set the color of the color inputs to the current values in local storage.
+    const storedCanvasColor = localStorage.getItem('canvasColor') || '#ffffff';
+    const storedBarColor = localStorage.getItem('barColor') || '#000000';
+    const canvasColorInput = document.getElementById('canvasColor');
+    const barColorInput = document.getElementById('barColor');
+    canvasColorInput.value = storedCanvasColor;
+    barColorInput.value = storedBarColor;
 
     /**
      * Handles the mousedown event for enabling panning.
@@ -462,6 +588,57 @@ function loadCanvas() {
                 points.length = 0;
             }
 
+            // If in scale mode, prompt the user for text entry after the second point
+            if (points.length === 2 && isCalibrationMode()) {
+                let measurement = 0;
+                while (true) {
+                    measurement = prompt("Enter the true measurment for this segment (Units = µm)", "");
+                    if (measurement && isNaN(measurement)) {
+                        alert("Please enter a valid number for the measurement.");
+                    } else {
+                        break;
+                    }
+                }
+
+                if (measurement) {
+                    while (true) {
+                        const calibration = prompt("Enter the name for this calibration", "");
+                        if (calibration && calibration.length > 0) {
+                            // Check if the calibration name already exists
+                            const existingCalibrations = JSON.parse(localStorage.getItem('calibrations')) || [];
+                            const calibrationExists = existingCalibrations.some(cal => cal.name === calibration);
+                            if (calibrationExists) {
+                                alert("This calibration name already exists. Please choose a different name.");
+                            } else {
+                                // Add the calibration and store all calibrations to local storage
+                                const lineLength = distance(lines[0].x1, lines[0].y1, lines[0].x2, lines[0].y2);
+                                const trueLength = parseFloat(measurement);
+                                // Calculate the px/µm ratio
+                                const rawPxPerMicron = lineLength / trueLength;
+                                const pxPerMicron = Math.round(rawPxPerMicron * 1000) / 1000; // Round to 3 decimal places
+                                const calibrationData = { name: calibration, value: pxPerMicron };
+                                calibrations.push(calibrationData);
+                                localStorage.setItem('calibrations', JSON.stringify(calibrations));
+                                alert(`${calibrationData.name} calibration added: ${calibrationData.value} px/µm`);
+
+                                // Update the dropdown with the new calibration
+                                const option = document.createElement('option');
+                                option.value = calibrationData.name;
+                                option.textContent = `${calibrationData.name} (${calibrationData.value} px/µm)`;
+                                calibrationSelect.appendChild(option);
+                                break;
+                            }
+                        } else {
+                            break; // Exit if no name is provided
+                        }
+                    }
+                }
+
+                // Clear the calibration points
+                points.length = 0;
+                lines.length = 0;
+            }
+
             redraw(ctx);
 
             const message = JSON.stringify({ x: pt.x, y: pt.y });
@@ -601,6 +778,12 @@ document.addEventListener('DOMContentLoaded', function () {
     const scaleMode = document.getElementById('scaleMode');
     const openImageButton = document.getElementById('openImage');
     const imageInput = document.getElementById('imageInput');
+    const uploadButton = document.getElementById('upload');
+    const uploadInput = document.getElementById('uploadInput');
+    const downloadButton = document.getElementById('download');
+    const resetButton = document.getElementById('reset');
+    const canvasColor = document.getElementById('canvasColor');
+    const barColor = document.getElementById('barColor');
 
     /**
      * Event listener for the 'sporeMode' button.
@@ -622,6 +805,12 @@ document.addEventListener('DOMContentLoaded', function () {
         sporeMode.classList.add('spore-mode-off');
         scaleMode.classList.remove('scale-mode-off');
         scaleMode.classList.add('scale-mode-on');
+
+        // Clear points and lines when switching to scale mode
+        points.length = 0;
+        lines.length = 0;
+        const ctx = canvas.getContext('2d');
+        redraw(ctx);
     });
 
     /**
@@ -646,6 +835,108 @@ document.addEventListener('DOMContentLoaded', function () {
             };
             reader.readAsDataURL(file); // Read the file as a data URL
         }
+    });
+
+    /** Event listener for the 'upload' button.
+     * Prompts the user to select a file and reads its contents.
+     * Parses the JSON data and updates the calibrations array and local storage.
+     * @param {Event} event - The click event object.
+     */
+    uploadButton.addEventListener('click', () => {
+        uploadInput.click(); // Programmatically click the file input
+    });
+
+    /**
+     * Event listener for changes to the upload input element.
+     * Reads the selected file and updates the calibrations array and local storage.
+     * @param {Event} event - The change event object.
+     * */
+    uploadInput.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (Array.isArray(data)) {
+                        calibrations.length = 0; // Clear existing calibrations
+                        calibrations.push(...data); // Add new calibrations
+                        localStorage.setItem('calibrations', JSON.stringify(calibrations)); // Update local storage
+                        alert("Calibrations uploaded successfully.");
+
+                        // Update the dropdown with the new calibrations
+                        const calibrationSelect = document.getElementById('calibrationSelect');
+                        calibrations.forEach(calibration => {
+                            const option = document.createElement('option');
+                            option.value = calibration.name;
+                            option.textContent = `${calibration.name} (${calibration.value} px/µm)`;
+                            calibrationSelect.appendChild(option);
+                        });
+                    } else {
+                        alert("Invalid file format. Please upload a valid JSON file.");
+                    }
+                } catch (error) {
+                    alert("Error reading file: " + error.message);
+                }
+            };
+            reader.readAsText(file); // Read the file as text
+        }
+    });
+
+    /** Event listener for the 'download' button.
+     * Creates a JSON file from the calibrations array and triggers a download.
+     * @param {Event} event - The click event object.
+     * */
+    downloadButton.addEventListener('click', () => {
+        const dataStr = JSON.stringify(calibrations, null, 2); // Convert calibrations to JSON string
+        const blob = new Blob([dataStr], { type: 'application/json' }); // Create a Blob from the JSON string
+        const url = URL.createObjectURL(blob); // Create a URL for the Blob
+
+        const a = document.createElement('a'); // Create an anchor element
+        a.href = url; // Set the href to the Blob URL
+        a.download = 'calibrations.json'; // Set the download attribute with a filename
+        document.body.appendChild(a); // Append the anchor to the body
+        a.click(); // Programmatically click the anchor to trigger the download
+        document.body.removeChild(a); // Remove the anchor from the DOM
+    });
+
+    /** Event listener for the 'reset' button.
+     * Alerts the user to confirm clearing local storage and all points, lines, and blobs.
+     * Clears the local storage and resets the canvas state.
+     * @param {Event} event - The click event object.
+     */
+    resetButton.addEventListener('click', () => {
+        const confirmReset = confirm("Are you sure you want to clear all calibrations and drawing elements? This action cannot be undone.");
+        if (confirmReset) {
+            localStorage.removeItem('calibrations');
+            localStorage.removeItem('activeCalibration');
+            localStorage.removeItem('canvasColor');
+            localStorage.removeItem('barColor');
+            location.reload();
+        }
+    });
+
+    /** Event listener for the 'canvasColor' input element.
+     * Updates the canvas background color based on the selected value.
+     * @param {Event} event - The input event object.
+     * */
+    canvasColor.addEventListener('input', (event) => {
+        const color = event.target.value;
+        localStorage.setItem('canvasColor', color);
+        canvas.style.backgroundColor = color;
+        const ctx = canvas.getContext('2d');
+        redraw(ctx);
+    });
+
+    /** Event listener for the 'barColor' input element.
+     * Updates the scale bar color based on the selected value.
+     * @param {Event} event - The input event object.
+     * */
+    barColor.addEventListener('input', (event) => {
+        const color = event.target.value;
+        localStorage.setItem('barColor', color);
+        const ctx = canvas.getContext('2d');
+        redraw(ctx);
     });
 
     /**
