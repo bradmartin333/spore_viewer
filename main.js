@@ -307,6 +307,37 @@ function loadCanvas() {
     let dragged = false;
     const scaleFactor = 1.1;
 
+    // Load and populate the calibrations from local storage.
+    // If no calibrations are found, initialize an empty array.
+    const storedCalibrations = localStorage.getItem('calibrations');
+    if (storedCalibrations) {
+        const parsedCalibrations = JSON.parse(storedCalibrations);
+        calibrations.push(...parsedCalibrations);
+    } else {
+        localStorage.setItem('calibrations', JSON.stringify(calibrations));
+    }
+    // Update the drop down
+    const calibrationSelect = document.getElementById('calibrationSelect');
+    calibrations.forEach(calibration => {
+        const option = document.createElement('option');
+        option.value = calibration.name;
+        option.textContent = `${calibration.name} (${calibration.value}px/µm)`;
+        calibrationSelect.appendChild(option);
+    });
+    // If local storage contains the value 'activeCalibration', set the selected option in the dropdown to that value.
+    const activeCalibration = localStorage.getItem('activeCalibration');
+    if (activeCalibration) {
+        const optionToSelect = Array.from(calibrationSelect.options).find(option => option.value === activeCalibration);
+        if (optionToSelect) {
+            optionToSelect.selected = true;
+        }
+    }
+    // Add an event listener to update the active calibration in local storage when the dropdown value changes.
+    calibrationSelect.addEventListener('change', () => {
+        const selectedCalibration = calibrationSelect.value;
+        localStorage.setItem('activeCalibration', selectedCalibration);
+    });
+
     /**
      * Handles the mousedown event for enabling panning.
      * Records the starting position of the drag.
@@ -500,14 +531,21 @@ function loadCanvas() {
                                 alert("This calibration name already exists. Please choose a different name.");
                             } else {
                                 // Add the calibration and store all calibrations to local storage
-                                const rawLineLength = distance(lines[0].x1, lines[0].y1, lines[0].x2, lines[0].y2);
-                                // Round the line length to 2 decimal places
-                                const lineLength = Math.round(lineLength * 100) / 100;
+                                const lineLength = distance(lines[0].x1, lines[0].y1, lines[0].x2, lines[0].y2);
                                 const trueLength = parseFloat(measurement);
-                                const calibrationData = { lineLength, trueLength, name: calibration };
+                                // Calculate the px/µm ratio
+                                const rawPxPerMicron = lineLength / trueLength;
+                                const pxPerMicron = Math.round(rawPxPerMicron * 1000) / 1000; // Round to 3 decimal places
+                                const calibrationData = { name: calibration, value: pxPerMicron };
                                 calibrations.push(calibrationData);
                                 localStorage.setItem('calibrations', JSON.stringify(calibrations));
-                                alert(`${calibrationData.name} calibration added: ${calibrationData.lineLength}px = ${calibrationData.trueLength}µm`);
+                                alert(`${calibrationData.name} calibration added: ${calibrationData.value}px/µm`);
+
+                                // Update the dropdown with the new calibration
+                                const option = document.createElement('option');
+                                option.value = calibrationData.name;
+                                option.textContent = `${calibrationData.name} (${calibrationData.value}px/µm)`;
+                                calibrationSelect.appendChild(option);
                                 break;
                             }
                         } else {
@@ -660,6 +698,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const scaleMode = document.getElementById('scaleMode');
     const openImageButton = document.getElementById('openImage');
     const imageInput = document.getElementById('imageInput');
+    const resetButton = document.getElementById('reset');
+    const helpButton = document.getElementById('help');
 
     /**
      * Event listener for the 'sporeMode' button.
@@ -710,6 +750,20 @@ document.addEventListener('DOMContentLoaded', function () {
                 gkhead.src = e.target.result; // Set the image source to the data URL
             };
             reader.readAsDataURL(file); // Read the file as a data URL
+        }
+    });
+
+    /** Event listener for the 'reset' button.
+     * Alerts the user to confirm clearing local storage and all points, lines, and blobs.
+     * Clears the local storage and resets the canvas state.
+     * @param {Event} event - The click event object.
+     */
+    resetButton.addEventListener('click', () => {
+        const confirmReset = confirm("Are you sure you want to clear all calibrations and drawing elements? This action cannot be undone.");
+        if (confirmReset) {
+            localStorage.removeItem('calibrations');
+            localStorage.removeItem('activeCalibration');
+            location.reload();
         }
     });
 

@@ -92,6 +92,26 @@ select:hover {
     color: black;
 }
 
+#reset {
+    background-color: var(--light-grey);
+    color: black;
+}
+
+#reset:hover {
+    background-color: var(--light-grey-hover);
+    color: black;
+}
+
+#help {
+    background-color: var(--light-grey);
+    color: black;
+}
+
+#help:hover {
+    background-color: var(--light-grey-hover);
+    color: black;
+}
+
 .spore-mode-on {
     background-color: var(--success-color);
 }

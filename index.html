@@ -18,9 +18,13 @@
         <input type="file" id="imageInput" accept="image/*" style="display: none;" />
         <button id="sporeMode" class="spore-mode-on">spore mode</button>
         <button id="scaleMode" class="scale-mode-off">scale mode</button>
+    </div>
+    <div class="container">
         <select id="calibrationSelect" class="calibration-select">
-            <option value="" disabled selected>calibration</option>
+            <option value="" disabled selected>no calibration</option>
         </select>
+        <button id="reset" class="reset-button">reset</button>
+        <button id="help" class="help-button">help</button>
     </div>
     <canvas id="image-canvas"></canvas>
     <script src="main.js"></script>
