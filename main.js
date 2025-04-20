@@ -40,11 +40,6 @@ const blobs = [];
 const calibrations = [];
 
 /**
- * Data string to diplay on the canvas.
- */
-const dataString = "";
-
-/**
  * Calculates the Euclidean distance between two points.
  * @param {number} x1 - The x-coordinate of the first point.
  * @param {number} y1 - The y-coordinate of the first point.
@@ -248,6 +243,16 @@ function redraw(ctx) {
         ctx.fillText(scaleText, labelPos.x, labelPos.y);
     }
 
+    stats = calculateBlobData(blobs);
+    const dataString = `Average X: ${stats.averageX} px\nAverage Y: ${stats.averageY} px\n` +
+        `Min X: ${stats.minX} px\nMax X: ${stats.maxX} px\n` +
+        `Min Y: ${stats.minY} px\nMax Y: ${stats.maxY} px\n` +
+        `Range X: ${stats.rangeX} px\nRange Y: ${stats.rangeY} px\n` +
+        `Standard Deviation X: ${stats.standardDeviationX} px\n` +
+        `Standard Deviation Y: ${stats.standardDeviationY} px\n` +
+        `Count: ${stats.count} points\n` +
+        `Calibration: ${activeCalibration ? activeCalibration : 'None'}`;
+
     // Draw the data string
     if (dataString.length > 0) {
         const bottomRight = ctx.transformedPoint(canvas.width - insetX, canvas.height - insetY);
@@ -388,6 +393,81 @@ function isPointBetweenPerpendiculars(point, segmentStart, segmentEnd) {
 
     // The point is between the perpendiculars if the dot products have opposite signs or one is zero
     return (dot1 <= 0 && dot2 >= 0) || (dot1 >= 0 && dot2 <= 0);
+}
+
+/**
+ * Calculates various statistics for the given blobs.
+ * @param {Array} blobs An array of blob objects, each containing two lines.
+ * @returns {Object} An object containing the calculated statistics:
+ ** averageX: Average x-coordinate of the blob endpoints.
+ ** averageY: Average y-coordinate of the blob endpoints.
+ ** minX: Minimum x-coordinate of the blob endpoints.
+ ** maxX: Maximum x-coordinate of the blob endpoints.
+ ** minY: Minimum y-coordinate of the blob endpoints.
+ ** maxY: Maximum y-coordinate of the blob endpoints.
+ ** rangeX: Range of x-coordinates (maxX - minX).
+ ** rangeY: Range of y-coordinates (maxY - minY).
+ ** standardDeviationX: Standard deviation of x-coordinates.
+ ** standardDeviationY: Standard deviation of y-coordinates.
+ ** count: Total number of blob endpoints processed.
+ */
+function calculateBlobData(blobs) {
+    if (blobs.length === 0) {
+        return {
+            averageX: 0,
+            averageY: 0,
+            minX: Infinity,
+            maxX: -Infinity,
+            minY: Infinity,
+            maxY: -Infinity,
+            rangeX: 0,
+            rangeY: 0,
+            standardDeviationX: 0,
+            standardDeviationY: 0,
+            count: 0
+        };
+    }
+
+    const allXValues = [];
+    const allYValues = [];
+
+    for (const blob of blobs) {
+        allXValues.push(distance(blob.line1.x1, blob.line1.y1, blob.line1.x2, blob.line1.y2));
+        allYValues.push(distance(blob.line2.x1, blob.line2.y1, blob.line2.x2, blob.line2.y2));
+    }
+
+    const count = allXValues.length;
+
+    const sumX = allXValues.reduce((a, b) => a + b, 0);
+    const sumY = allYValues.reduce((a, b) => a + b, 0);
+    const averageX = sumX / count;
+    const averageY = sumY / count;
+
+    const minX = Math.min(...allXValues);
+    const maxX = Math.max(...allXValues);
+    const minY = Math.min(...allYValues);
+    const maxY = Math.max(...allYValues);
+    const rangeX = maxX - minX;
+    const rangeY = maxY - minY;
+
+    const varianceX = allXValues.reduce((acc, val) => acc + Math.pow(val - averageX, 2), 0) / count;
+    const varianceY = allYValues.reduce((acc, val) => acc + Math.pow(val - averageY, 2), 0) / count;
+    const standardDeviationX = Math.sqrt(varianceX);
+    const standardDeviationY = Math.sqrt(varianceY);
+
+    return {
+        averageX: averageX.toFixed(2),
+        averageY: averageY.toFixed(2),
+        minX: minX.toFixed(2),
+        maxX: maxX.toFixed(2),
+        minY: minY.toFixed(2),
+        maxY: maxY.toFixed(2),
+        rangeX: rangeX.toFixed(2),
+        rangeY: rangeY.toFixed(2),
+        standardDeviationX: standardDeviationX.toFixed(2),
+        standardDeviationY: standardDeviationY.toFixed(2),
+        count: count
+    };
 }
 
 /**
