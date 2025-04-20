@@ -334,7 +334,7 @@ function loadCanvas() {
     calibrations.forEach(calibration => {
         const option = document.createElement('option');
         option.value = calibration.name;
-        option.textContent = `${calibration.name} (${calibration.value}px/µm)`;
+        option.textContent = `${calibration.name} (${calibration.value} px/µm)`;
         calibrationSelect.appendChild(option);
     });
     // If local storage contains the value 'activeCalibration', set the selected option in the dropdown to that value.
@@ -560,12 +560,12 @@ function loadCanvas() {
                                 const calibrationData = { name: calibration, value: pxPerMicron };
                                 calibrations.push(calibrationData);
                                 localStorage.setItem('calibrations', JSON.stringify(calibrations));
-                                alert(`${calibrationData.name} calibration added: ${calibrationData.value}px/µm`);
+                                alert(`${calibrationData.name} calibration added: ${calibrationData.value} px/µm`);
 
                                 // Update the dropdown with the new calibration
                                 const option = document.createElement('option');
                                 option.value = calibrationData.name;
-                                option.textContent = `${calibrationData.name} (${calibrationData.value}px/µm)`;
+                                option.textContent = `${calibrationData.name} (${calibrationData.value} px/µm)`;
                                 calibrationSelect.appendChild(option);
                                 break;
                             }
@@ -723,7 +723,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const uploadInput = document.getElementById('uploadInput');
     const downloadButton = document.getElementById('download');
     const resetButton = document.getElementById('reset');
-    const helpButton = document.getElementById('help');
 
     /**
      * Event listener for the 'sporeMode' button.
@@ -809,7 +808,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         calibrations.forEach(calibration => {
                             const option = document.createElement('option');
                             option.value = calibration.name;
-                            option.textContent = `${calibration.name} (${calibration.value}px/µm)`;
+                            option.textContent = `${calibration.name} (${calibration.value} px/µm)`;
                             calibrationSelect.appendChild(option);
                         });
                     } else {

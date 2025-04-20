@@ -166,3 +166,8 @@ footer .fa-github:hover {
     color: var(--primary-hover);
     cursor: pointer;
 }
+
+footer .fa-circle-question:hover {
+    color: var(--light-purple);
+    cursor: pointer;
+}
