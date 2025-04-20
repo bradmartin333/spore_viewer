@@ -225,7 +225,7 @@ function redraw(ctx) {
         } else {
             scaleBarLength = Math.round(scaleBarLength);
         }
-        
+
         // Draw the scale bar
         ctx.beginPath();
         ctx.moveTo(bottomLeft.x, bottomLeft.y);
@@ -234,7 +234,7 @@ function redraw(ctx) {
         ctx.lineWidth = 5 / ctx.getTransform().a;
         ctx.stroke();
         ctx.closePath();
-        
+
         // Draw scale bar text aligned in the center of the scale bar horizontally
         ctx.font = `bold ${12 / ctx.getTransform().a}px Arial`;
         ctx.fillStyle = barColor;
@@ -247,31 +247,33 @@ function redraw(ctx) {
         };
         ctx.fillText(scaleText, labelPos.x, labelPos.y);
     }
-    
+
     // Draw the data string
-    const bottomRight = ctx.transformedPoint(canvas.width - insetX, canvas.height - insetY);
-    ctx.font = `bold ${12 / ctx.getTransform().a}px Arial`;
-    ctx.fillStyle = 'black';
-    const dataLines = dataString.split('\n');
-    dataLines.reverse();
-    const longestLine = dataLines.reduce((a, b) => a.length > b.length ? a : b, '');
-    const textMetrics = ctx.measureText(longestLine);
-    const labelWidth = textMetrics.width;
-    const labelPos = {
-        x: bottomRight.x - labelWidth - 10 / ctx.getTransform().a,
-        y: bottomRight.y - 10 / ctx.getTransform().a
-    };
-    ctx.fillStyle = canvasColor;
-    ctx.globalAlpha = 0.5;
-    ctx.fillRect(labelPos.x - 5 / ctx.getTransform().a,
-        labelPos.y - 15 / ctx.getTransform().a * dataLines.length,
-        labelWidth + 10 / ctx.getTransform().a,
-        16 / ctx.getTransform().a * dataLines.length);
-    ctx.globalAlpha = 1.0;
-    ctx.fillStyle = barColor;
-    dataLines.forEach((line, index) => {
-        ctx.fillText(line, labelPos.x, labelPos.y - index * 15 / ctx.getTransform().a);
-    });
+    if (dataString.length > 0) {
+        const bottomRight = ctx.transformedPoint(canvas.width - insetX, canvas.height - insetY);
+        ctx.font = `bold ${12 / ctx.getTransform().a}px Arial`;
+        ctx.fillStyle = 'black';
+        const dataLines = dataString.split('\n');
+        dataLines.reverse();
+        const longestLine = dataLines.reduce((a, b) => a.length > b.length ? a : b, '');
+        const textMetrics = ctx.measureText(longestLine);
+        const labelWidth = textMetrics.width;
+        const labelPos = {
+            x: bottomRight.x - labelWidth - 10 / ctx.getTransform().a,
+            y: bottomRight.y - 10 / ctx.getTransform().a
+        };
+        ctx.fillStyle = canvasColor;
+        ctx.globalAlpha = 0.5;
+        ctx.fillRect(labelPos.x - 5 / ctx.getTransform().a,
+            labelPos.y - 15 / ctx.getTransform().a * dataLines.length,
+            labelWidth + 10 / ctx.getTransform().a,
+            16 / ctx.getTransform().a * dataLines.length);
+        ctx.globalAlpha = 1.0;
+        ctx.fillStyle = barColor;
+        dataLines.forEach((line, index) => {
+            ctx.fillText(line, labelPos.x, labelPos.y - index * 15 / ctx.getTransform().a);
+        });
+    }
 
     // Restore the context state
     ctx.restore();
