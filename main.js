@@ -137,13 +137,26 @@ function redraw(ctx) {
         ctx.closePath();
 
         // Display line lengths
-        const line1Length = distance(blob.line1.x1, blob.line1.y1, blob.line1.x2, blob.line1.y2);
-        const line2Length = distance(blob.line2.x1, blob.line2.y1, blob.line2.x2, blob.line2.y2);
+        let line1Length = distance(blob.line1.x1, blob.line1.y1, blob.line1.x2, blob.line1.y2);
+        let line2Length = distance(blob.line2.x1, blob.line2.y1, blob.line2.x2, blob.line2.y2);
+        let units = 'px';
         ctx.font = `${12 / ctx.getTransform().a}px Arial`; // Adjust font size based on zoom
         ctx.fillStyle = 'black';
 
-        const textLine1 = `${line1Length.toFixed(2)} px`;
-        const textLine2 = `${line2Length.toFixed(2)} px`;
+        // If an active calibration is selected, convert the lengths to micrometers
+        const activeCalibration = localStorage.getItem('activeCalibration');
+        if (activeCalibration) {
+            const calibration = calibrations.find(cal => cal.name === activeCalibration);
+            if (calibration) {
+                const pxPerMicron = calibration.value;
+                line1Length /= pxPerMicron;
+                line2Length /= pxPerMicron;
+                units = 'µm';
+            }
+        }
+
+        const textLine1 = `${line1Length.toFixed(2)} ${units}`;
+        const textLine2 = `${line2Length.toFixed(2)} ${units}`;
         const textMetricsLine1 = ctx.measureText(textLine1);
         const textMetricsLine2 = ctx.measureText(textLine2);
         const labelWidthLine1 = textMetricsLine1.width;
@@ -335,7 +348,15 @@ function loadCanvas() {
     // Add an event listener to update the active calibration in local storage when the dropdown value changes.
     calibrationSelect.addEventListener('change', () => {
         const selectedCalibration = calibrationSelect.value;
-        localStorage.setItem('activeCalibration', selectedCalibration);
+        // If the selected calibration is item 0, clear the active calibration in local storage.
+        if (selectedCalibration === '0') {
+            localStorage.removeItem('activeCalibration');
+        } else {
+            localStorage.setItem('activeCalibration', selectedCalibration);
+        }
+        // Redraw the canvas to reflect the new calibration.
+        const ctx = canvas.getContext('2d');
+        redraw(ctx);
     });
 
     /**
