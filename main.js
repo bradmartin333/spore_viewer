@@ -109,7 +109,7 @@ function redraw(ctx) {
     const offsetY = (canvas.height - gkhead.height * scale) / 2;
     ctx.setTransform(scale, 0, 0, scale, offsetX, offsetY);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
+
     // Fill the entire canvas with the selected color
     const canvasColor = localStorage.getItem('canvasColor') || '#ffffff';
     ctx.fillStyle = canvasColor;
@@ -188,13 +188,15 @@ function redraw(ctx) {
     });
 
     // Draw points
-    points.forEach(point => {
-        ctx.beginPath();
-        ctx.arc(point.x, point.y, 5 / ctx.getTransform().a, 0, 2 * Math.PI); // Adjust radius based on zoom
-        ctx.fillStyle = isCalibrationMode() ? 'yellow' : point.idx > 1 ? 'green' : 'red';
-        ctx.fill();
-        ctx.closePath();
-    });
+    if (!isCalibrationMode()) {
+        points.forEach(point => {
+            ctx.beginPath();
+            ctx.arc(point.x, point.y, 5 / ctx.getTransform().a, 0, 2 * Math.PI); // Adjust radius based on zoom
+            ctx.fillStyle = point.idx > 1 ? 'green' : 'red';
+            ctx.fill();
+            ctx.closePath();
+        });
+    }
 
     // Scale bar
     const insetX = 10;
