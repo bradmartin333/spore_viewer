@@ -18,7 +18,7 @@ tooling for fungal microscopy
     - [x] save/load calibrations to/from local storage
     - [x] allow save/load of calibrations as JSON to local disk
 - [x] allow user to add a second, fixed image to the foreground
-- [ ] write wiki documentation
+- [x] write wiki documentation
 - [ ] stretch goals
     - [ ] automatically detect spores
     - [ ] automatic naming and metadata generation
