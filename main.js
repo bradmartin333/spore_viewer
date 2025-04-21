@@ -201,15 +201,13 @@ function redraw(ctx) {
     });
 
     // Draw points
-    if (!isCalibrationMode()) {
-        points.forEach(point => {
-            ctx.beginPath();
-            ctx.arc(point.x, point.y, 5 / ctx.getTransform().a, 0, 2 * Math.PI); // Adjust radius based on zoom
-            ctx.fillStyle = point.idx > 1 ? 'green' : 'red';
-            ctx.fill();
-            ctx.closePath();
-        });
-    }
+    points.forEach(point => {
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, 5 / ctx.getTransform().a, 0, 2 * Math.PI); // Adjust radius based on zoom
+        ctx.fillStyle = isCalibrationMode() ? 'yellow' : point.idx > 1 ? 'green' : 'red';
+        ctx.fill();
+        ctx.closePath();
+    });
 
     // Scale bar
     const barColor = localStorage.getItem('barColor') || 'black';
@@ -264,14 +262,10 @@ function redraw(ctx) {
             "click the ? below to learn how to use this tool";
     } else if (blobs.length > 0) {
         stats = calculateBlobData(blobs);
-        dataString = `Average X: ${stats.averageX} px\nAverage Y: ${stats.averageY} px\n` +
-            `Min X: ${stats.minX} px\nMax X: ${stats.maxX} px\n` +
-            `Min Y: ${stats.minY} px\nMax Y: ${stats.maxY} px\n` +
-            `Range X: ${stats.rangeX} px\nRange Y: ${stats.rangeY} px\n` +
-            `Standard Deviation X: ${stats.standardDeviationX} px\n` +
-            `Standard Deviation Y: ${stats.standardDeviationY} px\n` +
-            `Count: ${stats.count} points\n` +
-            `Calibration: ${activeCalibration ? activeCalibration : 'None'}`;
+        const dataUnit = activeCalibration ? 'µm' : 'px';
+        dataString = `range = (${stats.minX} - ${stats.maxX}) x (${stats.minY} - ${stats.maxY}) ${dataUnit}\n` +
+            `avg = ${stats.averageX} x ${stats.averageY} ${dataUnit}, n = ${stats.count}, Q = ${(stats.averageX / stats.averageY).toFixed(2)}\n` +
+            `stddev = ${stats.standardDeviationX} x ${stats.standardDeviationY} ${dataUnit}, ${activeCalibration ? activeCalibration : 'no'} calibration`;
     }
 
     // Draw the data string
