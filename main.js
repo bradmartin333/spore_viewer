@@ -131,7 +131,7 @@ function redraw(ctx) {
     // Fill the entire canvas with the selected color
     const canvasColor = localStorage.getItem('canvasColor') || '#ffffff';
     ctx.fillStyle = canvasColor;
-    ctx.fillRect(-canvas.width, -canvas.height, canvas.width * 3, canvas.height * 3);
+    ctx.fillRect(-canvas.width * 10, -canvas.height * 10, canvas.width * 30, canvas.height * 30);
     ctx.restore();
 
     // Draw the image
@@ -239,11 +239,12 @@ function redraw(ctx) {
     }
     let scaleBarValue = scaleBarLength; // Default value in pixels
     const activeCalibration = localStorage.getItem('activeCalibration');
+    let activePxPerMicron = 1.0;
     if (activeCalibration) {
         const calibration = calibrations.find(cal => cal.name === activeCalibration);
         if (calibration) {
-            const pxPerMicron = calibration.value;
-            scaleBarValue /= pxPerMicron; // Convert to micrometers
+            activePxPerMicron = calibration.value;
+            scaleBarValue /= activePxPerMicron; // Convert to micrometers
             if (scaleBarValue > 1) {
                 scaleBarValue = scaleBarValue.toFixed(0);
             }
@@ -298,7 +299,7 @@ function redraw(ctx) {
         const dataUnit = activeCalibration ? 'µm' : 'px';
         dataString += `range = (${stats.minX} - ${stats.maxX}) x (${stats.minY} - ${stats.maxY}) ${dataUnit}\n` +
             `avg = ${stats.averageX} x ${stats.averageY} ${dataUnit}, n = ${stats.count}, Q = ${(stats.averageX / stats.averageY).toFixed(2)}\n` +
-            `stddev = ${stats.standardDeviationX} x ${stats.standardDeviationY} ${dataUnit}, ${activeCalibration ? activeCalibration : 'no'} calibration   \n`;
+            `stddev = ${stats.standardDeviationX} x ${stats.standardDeviationY} ${dataUnit}${activeCalibration ? `, ${activeCalibration} (${activePxPerMicron} px/µm)` : ''}\n`;
     }
 
     if (dataString.length > 0) {
