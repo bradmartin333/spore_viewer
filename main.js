@@ -40,11 +40,6 @@ const blobs = [];
 const calibrations = [];
 
 /**
- * Data string to diplay on the canvas.
- */
-const dataString = "";
-
-/**
  * Calculates the Euclidean distance between two points.
  * @param {number} x1 - The x-coordinate of the first point.
  * @param {number} y1 - The y-coordinate of the first point.
@@ -63,6 +58,19 @@ const distance = (x1, y1, x2, y2) => {
 const isCalibrationMode = () => {
     const scaleMode = document.getElementById('scaleMode');
     return scaleMode.classList.contains('scale-mode-on');
+}
+
+/** 
+ * Checks if the 'visited' key is present in local storage.
+ * If not, it sets it to 'true' and returns true.
+ * @returns {boolean} - True if it's the first visit, false otherwise.
+ */
+function isFirstVisit() {
+    if (localStorage.getItem('visited') === null) {
+        localStorage.setItem('visited', 'true');
+        return true;
+    }
+    return false;
 }
 
 /**
@@ -193,15 +201,13 @@ function redraw(ctx) {
     });
 
     // Draw points
-    if (!isCalibrationMode()) {
-        points.forEach(point => {
-            ctx.beginPath();
-            ctx.arc(point.x, point.y, 5 / ctx.getTransform().a, 0, 2 * Math.PI); // Adjust radius based on zoom
-            ctx.fillStyle = point.idx > 1 ? 'green' : 'red';
-            ctx.fill();
-            ctx.closePath();
-        });
-    }
+    points.forEach(point => {
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, 5 / ctx.getTransform().a, 0, 2 * Math.PI); // Adjust radius based on zoom
+        ctx.fillStyle = isCalibrationMode() ? 'yellow' : point.idx > 1 ? 'green' : 'red';
+        ctx.fill();
+        ctx.closePath();
+    });
 
     // Scale bar
     const barColor = localStorage.getItem('barColor') || 'black';
@@ -246,6 +252,20 @@ function redraw(ctx) {
             y: bottomLeft.y - 7 / ctx.getTransform().a
         };
         ctx.fillText(scaleText, labelPos.x, labelPos.y);
+    }
+
+
+    let dataString = "";
+
+    if (isFirstVisit()) {
+        dataString = "welcome to spore viewer!\n" +
+            "click the ? below to learn how to use this tool";
+    } else if (blobs.length > 0) {
+        stats = calculateBlobData(blobs);
+        const dataUnit = activeCalibration ? 'µm' : 'px';
+        dataString = `range = (${stats.minX} - ${stats.maxX}) x (${stats.minY} - ${stats.maxY}) ${dataUnit}\n` +
+            `avg = ${stats.averageX} x ${stats.averageY} ${dataUnit}, n = ${stats.count}, Q = ${(stats.averageX / stats.averageY).toFixed(2)}\n` +
+            `stddev = ${stats.standardDeviationX} x ${stats.standardDeviationY} ${dataUnit}, ${activeCalibration ? activeCalibration : 'no'} calibration`;
     }
 
     // Draw the data string
@@ -388,6 +408,81 @@ function isPointBetweenPerpendiculars(point, segmentStart, segmentEnd) {
 
     // The point is between the perpendiculars if the dot products have opposite signs or one is zero
     return (dot1 <= 0 && dot2 >= 0) || (dot1 >= 0 && dot2 <= 0);
+}
+
+/**
+ * Calculates various statistics for the given blobs.
+ * @param {Array} blobs An array of blob objects, each containing two lines.
+ * @returns {Object} An object containing the calculated statistics:
+ ** averageX: Average x-coordinate of the blob endpoints.
+ ** averageY: Average y-coordinate of the blob endpoints.
+ ** minX: Minimum x-coordinate of the blob endpoints.
+ ** maxX: Maximum x-coordinate of the blob endpoints.
+ ** minY: Minimum y-coordinate of the blob endpoints.
+ ** maxY: Maximum y-coordinate of the blob endpoints.
+ ** rangeX: Range of x-coordinates (maxX - minX).
+ ** rangeY: Range of y-coordinates (maxY - minY).
+ ** standardDeviationX: Standard deviation of x-coordinates.
+ ** standardDeviationY: Standard deviation of y-coordinates.
+ ** count: Total number of blob endpoints processed.
+ */
+function calculateBlobData(blobs) {
+    if (blobs.length === 0) {
+        return {
+            averageX: 0,
+            averageY: 0,
+            minX: Infinity,
+            maxX: -Infinity,
+            minY: Infinity,
+            maxY: -Infinity,
+            rangeX: 0,
+            rangeY: 0,
+            standardDeviationX: 0,
+            standardDeviationY: 0,
+            count: 0
+        };
+    }
+
+    const allXValues = [];
+    const allYValues = [];
+
+    for (const blob of blobs) {
+        allXValues.push(distance(blob.line1.x1, blob.line1.y1, blob.line1.x2, blob.line1.y2));
+        allYValues.push(distance(blob.line2.x1, blob.line2.y1, blob.line2.x2, blob.line2.y2));
+    }
+
+    const count = allXValues.length;
+
+    const sumX = allXValues.reduce((a, b) => a + b, 0);
+    const sumY = allYValues.reduce((a, b) => a + b, 0);
+    const averageX = sumX / count;
+    const averageY = sumY / count;
+
+    const minX = Math.min(...allXValues);
+    const maxX = Math.max(...allXValues);
+    const minY = Math.min(...allYValues);
+    const maxY = Math.max(...allYValues);
+    const rangeX = maxX - minX;
+    const rangeY = maxY - minY;
+
+    const varianceX = allXValues.reduce((acc, val) => acc + Math.pow(val - averageX, 2), 0) / count;
+    const varianceY = allYValues.reduce((acc, val) => acc + Math.pow(val - averageY, 2), 0) / count;
+    const standardDeviationX = Math.sqrt(varianceX);
+    const standardDeviationY = Math.sqrt(varianceY);
+
+    return {
+        averageX: averageX.toFixed(2),
+        averageY: averageY.toFixed(2),
+        minX: minX.toFixed(2),
+        maxX: maxX.toFixed(2),
+        minY: minY.toFixed(2),
+        maxY: maxY.toFixed(2),
+        rangeX: rangeX.toFixed(2),
+        rangeY: rangeY.toFixed(2),
+        standardDeviationX: standardDeviationX.toFixed(2),
+        standardDeviationY: standardDeviationY.toFixed(2),
+        count: count
+    };
 }
 
 /**
@@ -616,6 +711,13 @@ function loadCanvas() {
 
             // Create a blob when the fourth point is added
             if (points.length === 4) {
+                // lines[0] should be longer than lines[1], swap them if this is not true
+                const d1 = distance(lines[0].x1, lines[0].y1, lines[0].x2, lines[0].y2);
+                const d2 = distance(lines[1].x1, lines[1].y1, lines[1].x2, lines[1].y2);
+                if (d2 > d1) {
+                    lines.push(lines[0]);
+                    lines.shift();
+                }
                 blobs.push({ line1: lines[0], line2: lines[1] });
                 lines.length = 0;
                 points.length = 0;
@@ -945,6 +1047,7 @@ document.addEventListener('DOMContentLoaded', function () {
             localStorage.removeItem('activeCalibration');
             localStorage.removeItem('canvasColor');
             localStorage.removeItem('barColor');
+            localStorage.removeItem('visited');
             location.reload();
         }
     });
