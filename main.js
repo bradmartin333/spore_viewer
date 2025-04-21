@@ -485,8 +485,20 @@ function calculateBlobData(blobs) {
     const allYValues = [];
 
     for (const blob of blobs) {
-        allXValues.push(distance(blob.line1.x1, blob.line1.y1, blob.line1.x2, blob.line1.y2));
-        allYValues.push(distance(blob.line2.x1, blob.line2.y1, blob.line2.x2, blob.line2.y2));
+        const xValue = distance(blob.line1.x1, blob.line1.y1, blob.line1.x2, blob.line1.y2);
+        const yValue = distance(blob.line2.x1, blob.line2.y1, blob.line2.x2, blob.line2.y2);
+        const activeCalibration = localStorage.getItem('activeCalibration');
+        if (activeCalibration) {
+            const calibration = calibrations.find(cal => cal.name === activeCalibration);
+            if (calibration) {
+                const pxPerMicron = calibration.value;
+                allXValues.push(xValue / pxPerMicron);
+                allYValues.push(yValue / pxPerMicron);
+            }
+        } else {
+            allXValues.push(xValue);
+            allYValues.push(yValue);
+        }
     }
 
     const count = allXValues.length;
