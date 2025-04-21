@@ -230,23 +230,29 @@ function redraw(ctx) {
     const insetY = 10;
     const bottomLeft = ctx.transformedPoint(insetX, canvas.height - insetY);
     let scaleBarLength = 100.0 / ctx.getTransform().a;
+    // If the scale bar length is greater than 10, 
+    // round it to the nearest multiple of 10.
+    if (scaleBarLength > 10) {
+        scaleBarLength = Math.round(scaleBarLength / 10) * 10;
+    } else {
+        scaleBarLength = Math.round(scaleBarLength);
+    }
+    let scaleBarValue = scaleBarLength; // Default value in pixels
     const activeCalibration = localStorage.getItem('activeCalibration');
     if (activeCalibration) {
         const calibration = calibrations.find(cal => cal.name === activeCalibration);
         if (calibration) {
             const pxPerMicron = calibration.value;
-            scaleBarLength /= pxPerMicron; // Convert to micrometers
+            scaleBarValue /= pxPerMicron; // Convert to micrometers
+            if (scaleBarValue > 1) {
+                scaleBarValue = scaleBarValue.toFixed(0);
+            }
+            else {
+                scaleBarValue = scaleBarValue.toFixed(2);
+            }
         }
     }
     if (scaleBarLength >= 1) {
-        // If the scale bar length is greater than 10, 
-        // round it to the nearest multiple of 10.
-        if (scaleBarLength > 10) {
-            scaleBarLength = Math.round(scaleBarLength / 10) * 10;
-        } else {
-            scaleBarLength = Math.round(scaleBarLength);
-        }
-
         // Draw the scale bar
         ctx.beginPath();
         ctx.moveTo(bottomLeft.x, bottomLeft.y);
@@ -259,7 +265,7 @@ function redraw(ctx) {
         // Draw scale bar text aligned in the center of the scale bar horizontally
         ctx.font = `bold ${12 / ctx.getTransform().a}px Arial`;
         ctx.fillStyle = barColor;
-        const scaleText = `${scaleBarLength} ${activeCalibration ? 'µm' : 'px'}`;
+        const scaleText = `${scaleBarValue} ${activeCalibration ? 'µm' : 'px'}`;
         const textMetrics = ctx.measureText(scaleText);
         const labelWidth = textMetrics.width;
         const labelPos = {
@@ -479,8 +485,20 @@ function calculateBlobData(blobs) {
     const allYValues = [];
 
     for (const blob of blobs) {
-        allXValues.push(distance(blob.line1.x1, blob.line1.y1, blob.line1.x2, blob.line1.y2));
-        allYValues.push(distance(blob.line2.x1, blob.line2.y1, blob.line2.x2, blob.line2.y2));
+        const xValue = distance(blob.line1.x1, blob.line1.y1, blob.line1.x2, blob.line1.y2);
+        const yValue = distance(blob.line2.x1, blob.line2.y1, blob.line2.x2, blob.line2.y2);
+        const activeCalibration = localStorage.getItem('activeCalibration');
+        if (activeCalibration) {
+            const calibration = calibrations.find(cal => cal.name === activeCalibration);
+            if (calibration) {
+                const pxPerMicron = calibration.value;
+                allXValues.push(xValue / pxPerMicron);
+                allYValues.push(yValue / pxPerMicron);
+            }
+        } else {
+            allXValues.push(xValue);
+            allYValues.push(yValue);
+        }
     }
 
     const count = allXValues.length;
@@ -554,6 +572,8 @@ function loadCanvas() {
         const optionToSelect = Array.from(calibrationSelect.options).find(option => option.value === activeCalibration);
         if (optionToSelect) {
             optionToSelect.selected = true;
+            const ctx = canvas.getContext('2d');
+            redraw(ctx);
         }
     }
     // Add an event listener to update the active calibration in local storage when the dropdown value changes.
@@ -775,26 +795,58 @@ function loadCanvas() {
                             const existingCalibrations = JSON.parse(localStorage.getItem('calibrations')) || [];
                             const calibrationExists = existingCalibrations.some(cal => cal.name === calibration);
                             if (calibrationExists) {
-                                alert("This calibration name already exists. Please choose a different name.");
-                            } else {
-                                // Add the calibration and store all calibrations to local storage
-                                const lineLength = distance(lines[0].x1, lines[0].y1, lines[0].x2, lines[0].y2);
-                                const trueLength = parseFloat(measurement);
-                                // Calculate the px/µm ratio
-                                const rawPxPerMicron = lineLength / trueLength;
-                                const pxPerMicron = Math.round(rawPxPerMicron * 1000) / 1000; // Round to 3 decimal places
-                                const calibrationData = { name: calibration, value: pxPerMicron };
-                                calibrations.push(calibrationData);
-                                localStorage.setItem('calibrations', JSON.stringify(calibrations));
-                                alert(`${calibrationData.name} calibration added: ${calibrationData.value} px/µm`);
-
-                                // Update the dropdown with the new calibration
-                                const option = document.createElement('option');
-                                option.value = calibrationData.name;
-                                option.textContent = `${calibrationData.name} (${calibrationData.value} px/µm)`;
-                                calibrationSelect.appendChild(option);
-                                break;
+                                // Ask user if they want to overwrite the existing calibration
+                                const overwrite = confirm(`The calibration name "${calibration}" already exists. Do you want to overwrite it?`);
+                                if (overwrite) {
+                                    // Remove the existing calibration
+                                    const index = calibrations.findIndex(cal => cal.name === calibration);
+                                    if (index !== -1) {
+                                        calibrations.splice(index, 1);
+                                    }
+                                } else {
+                                    // If user chooses not to overwrite, prompt for a new name
+                                    continue;
+                                }
                             }
+
+                            // Calculate the px/µm ratio
+                            const lineLength = distance(lines[0].x1, lines[0].y1, lines[0].x2, lines[0].y2);
+                            const trueLength = parseFloat(measurement);
+                            const rawPxPerMicron = lineLength / trueLength;
+                            const pxPerMicron = Math.round(rawPxPerMicron * 1000) / 1000; // Round to 3 decimal places
+                            const calibrationData = { name: calibration, value: pxPerMicron };
+                            calibrations.push(calibrationData);
+                            localStorage.setItem('calibrations', JSON.stringify(calibrations));
+                            alert(`${calibrationData.name} calibration added: ${calibrationData.value} px/µm`);
+
+                            // Repopulate the dropdown with all the calibrations
+                            calibrationSelect.innerHTML = ''; // Clear existing options
+                            const defaultOption = document.createElement('option');
+                            defaultOption.value = '0';
+                            defaultOption.textContent = 'no calibration';
+                            calibrationSelect.appendChild(defaultOption);
+                            calibrations.forEach(calibration => {
+                                const option = document.createElement('option');
+                                option.value = calibration.name;
+                                option.textContent = `${calibration.name} (${calibration.value} px/µm)`;
+                                calibrationSelect.appendChild(option);
+                            });
+
+                            // Set the new calibration as the active calibration
+                            localStorage.setItem('activeCalibration', calibrationData.name);
+                            const selectedOption = Array.from(calibrationSelect.options).find(option => option.value === calibrationData.name);
+                            if (selectedOption) {
+                                selectedOption.selected = true;
+                            }
+
+                            // Enter spore mode
+                            const sporeMode = document.getElementById('sporeMode');
+                            sporeMode.click();
+
+                            // Redraw the canvas to reflect the new calibration
+                            const ctx = canvas.getContext('2d');
+                            redraw(ctx);
+                            break;
                         } else {
                             break; // Exit if no name is provided
                         }
