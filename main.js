@@ -1187,6 +1187,9 @@ document.addEventListener('DOMContentLoaded', function () {
      */
     detectBlobsButton.addEventListener('click', () => {
         if (opencvInitialized) {
+            // Clear existing blobs
+            blobs.length = 0;
+
             // Create temporary canvas to process the image with OpenCV
             const temp_canvas = document.createElement('canvas');
             temp_canvas.width = gkhead.width;
@@ -1277,12 +1280,23 @@ document.addEventListener('DOMContentLoaded', function () {
                     line2: { x1: perpendicularP1[0], y1: perpendicularP1[1], x2: perpendicularP2[0], y2: perpendicularP2[1] }
                 });
             }
+
+            // Breaks opening of images (Use for debugging OpenCV)
+            // Draw the detected blobs on the main canvas
+            // temp_ctx.drawImage(temp_canvas, 0, 0);
+            // cv.imshow(temp_canvas, dst);
+
             // Free resources
             src.delete();
             dst.delete();
             temp_canvas.remove();
             contours.delete(); // Delete the contours MatVector
             hierarchy.delete(); // Delete the hierarchy Mat
+
+            // Breaks opening of images (Use for debugging OpenCV)
+            // Update image
+            //gkhead = temp_canvas;
+
             // Redraw the canvas with the detected blobs
             const ctx = canvas.getContext('2d');
             redraw(ctx);
