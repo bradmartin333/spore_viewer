@@ -281,7 +281,6 @@ function redraw(ctx) {
 
     // If local storage contains the array 'note', append each note to the data string
     const notes = JSON.parse(localStorage.getItem('notes')) || [];
-    console.log(notes);
     if (notes.length > 0) {
         notes.forEach(note => {
             dataString += note + "\n";
