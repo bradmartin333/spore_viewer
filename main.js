@@ -60,6 +60,19 @@ const isCalibrationMode = () => {
     return scaleMode.classList.contains('scale-mode-on');
 }
 
+/** 
+ * Checks if the 'visited' key is present in local storage.
+ * If not, it sets it to 'true' and returns true.
+ * @returns {boolean} - True if it's the first visit, false otherwise.
+ */
+function isFirstVisit() {
+    if (localStorage.getItem('visited') === null) {
+        localStorage.setItem('visited', 'true');
+        return true;
+    }
+    return false;
+}
+
 /**
  * Adjusts the label position to prevent overlap with line endpoints.
  * @param {number} x - The initial x-coordinate of the label.
@@ -243,15 +256,23 @@ function redraw(ctx) {
         ctx.fillText(scaleText, labelPos.x, labelPos.y);
     }
 
-    stats = calculateBlobData(blobs);
-    const dataString = `Average X: ${stats.averageX} px\nAverage Y: ${stats.averageY} px\n` +
-        `Min X: ${stats.minX} px\nMax X: ${stats.maxX} px\n` +
-        `Min Y: ${stats.minY} px\nMax Y: ${stats.maxY} px\n` +
-        `Range X: ${stats.rangeX} px\nRange Y: ${stats.rangeY} px\n` +
-        `Standard Deviation X: ${stats.standardDeviationX} px\n` +
-        `Standard Deviation Y: ${stats.standardDeviationY} px\n` +
-        `Count: ${stats.count} points\n` +
-        `Calibration: ${activeCalibration ? activeCalibration : 'None'}`;
+
+    let dataString = "";
+
+    if (isFirstVisit()) {
+        dataString = "welcome to spore viewer!\n" +
+            "click the ? below to learn how to use this tool";
+    } else if (blobs.length > 0) {
+        stats = calculateBlobData(blobs);
+        dataString = `Average X: ${stats.averageX} px\nAverage Y: ${stats.averageY} px\n` +
+            `Min X: ${stats.minX} px\nMax X: ${stats.maxX} px\n` +
+            `Min Y: ${stats.minY} px\nMax Y: ${stats.maxY} px\n` +
+            `Range X: ${stats.rangeX} px\nRange Y: ${stats.rangeY} px\n` +
+            `Standard Deviation X: ${stats.standardDeviationX} px\n` +
+            `Standard Deviation Y: ${stats.standardDeviationY} px\n` +
+            `Count: ${stats.count} points\n` +
+            `Calibration: ${activeCalibration ? activeCalibration : 'None'}`;
+    }
 
     // Draw the data string
     if (dataString.length > 0) {
@@ -1025,6 +1046,7 @@ document.addEventListener('DOMContentLoaded', function () {
             localStorage.removeItem('activeCalibration');
             localStorage.removeItem('canvasColor');
             localStorage.removeItem('barColor');
+            localStorage.removeItem('visited');
             location.reload();
         }
     });
