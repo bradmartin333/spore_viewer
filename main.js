@@ -1204,11 +1204,10 @@ document.addEventListener('DOMContentLoaded', function () {
             const hierarchy = new cv.Mat();
             cv.findContours(dst, contours, hierarchy, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE);
             for (let i = 0; i < contours.size(); ++i) {
-                // filter contours based on area
+                // Filter contours based on area
                 const area = cv.contourArea(contours.get(i));
-                if (area < 100) continue; // Skip small contours
-                if (area > 10000) continue; // Skip large contours
-                // filter contours based on circularity
+                if (area < 0.001 * gkhead.width * gkhead.height || area > 0.8 * gkhead.width * gkhead.height) continue;
+                // Filter contours based on circularity
                 const perimeter = cv.arcLength(contours.get(i), true);
                 const circularity = (4 * Math.PI * area) / (perimeter * perimeter);
                 if (circularity < 0.75) continue; // Skip non-circular contours
@@ -1254,8 +1253,8 @@ document.addEventListener('DOMContentLoaded', function () {
                                 maxPerpendicularDistance = distance;
                                 perpendicularP1 = [point1.x, point1.y];
                                 const angle = lineAngle + Math.PI / 2; // Perpendicular angle
-                                const offsetX = Math.cos(angle) * distance;
-                                const offsetY = Math.sin(angle) * distance;
+                                const offsetX = Math.cos(angle) * distance * 0.95;
+                                const offsetY = Math.sin(angle) * distance * 0.95;
                                 // Ensure p1 has the lower y-value for consistent calculations
                                 if (p1[1] > p2[1] || (p1[1] === p2[1] && p1[0] > p2[0])) {
                                     [p1, p2] = [p2, p1];
@@ -1272,21 +1271,19 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
                 }
                 if (!perpendicularP1 || !perpendicularP2) continue; // Skip if no perpendicular line is found
-                
+
                 blobs.push({
                     line1: { x1: p1[0], y1: p1[1], x2: p2[0], y2: p2[1] },
                     line2: { x1: perpendicularP1[0], y1: perpendicularP1[1], x2: perpendicularP2[0], y2: perpendicularP2[1] }
                 });
             }
-            // Draw the detected blobs on the main canvas
-            // temp_ctx.drawImage(temp_canvas, 0, 0);
-            // cv.imshow(temp_canvas, dst);
             // Free resources
             src.delete();
             dst.delete();
             temp_canvas.remove();
-            // Update image
-            gkhead = temp_canvas;
+            contours.delete(); // Delete the contours MatVector
+            hierarchy.delete(); // Delete the hierarchy Mat
+            // Redraw the canvas with the detected blobs
             const ctx = canvas.getContext('2d');
             redraw(ctx);
         } else {
