@@ -216,12 +216,12 @@ function redraw(ctx) {
 
 
     // Draw the secondary image if it exists
-    // Scale the image to 30% of the canvas width and position it at the bottom center
+    // Scale the image to 30% of the gkhead width and position it at the bottom center
     if (gkhead2.src) {
-        const scale = 0.3 * canvas.width / gkhead2.width;
-        const offsetX = 0.3 * canvas.width;
-        const offsetY = canvas.height - gkhead2.height * scale;
-        ctx.drawImage(gkhead2, offsetX, offsetY, offsetX, gkhead2.height * scale);
+        const offsetX = 0.3 * gkhead.width;
+        const scale = offsetX / gkhead2.width;
+        const offsetY = 0.85 * gkhead.height;
+        ctx.drawImage(gkhead2, offsetX, offsetY, gkhead2.width * scale, gkhead2.height * scale);
     }
 
     // Scale bar
