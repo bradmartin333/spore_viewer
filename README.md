@@ -21,4 +21,8 @@ tooling for fungal microscopy
 - [x] write wiki documentation
 - [ ] stretch goals
     - [ ] automatically detect spores
+        - [x] add development button for detecting blobs
+        - [ ] allow user fine tuning and debugging
     - [ ] automatic naming and metadata generation
+        - [ ] add database of colors, sizes and shapes
+        - [ ] allow for user contributions

@@ -45,6 +45,11 @@ const blobs = [];
 const calibrations = [];
 
 /**
+ * Variable to store the initialization state of opencv
+ */
+let opencvInitialized = false;
+
+/**
  * Calculates the Euclidean distance between two points.
  * @param {number} x1 - The x-coordinate of the first point.
  * @param {number} y1 - The y-coordinate of the first point.
@@ -1014,6 +1019,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const resetButton = document.getElementById('reset');
     const canvasColor = document.getElementById('canvasColor');
     const barColor = document.getElementById('barColor');
+    const detectBlobsButton = document.getElementById('detectBlobs');
     const addImageButton = document.getElementById('addImage');
     const secondaryImageInput = document.getElementById('secondaryImageInput');
     const addNoteButton = document.getElementById('addNote');
@@ -1175,6 +1181,130 @@ document.addEventListener('DOMContentLoaded', function () {
         redraw(ctx);
     });
 
+    /** Event listener for the 'detectBlobs' button.
+     * Uses OpenCV to detect blobs in the image and draws them on the canvas.
+     * @param {Event} event - The click event object.
+     */
+    detectBlobsButton.addEventListener('click', () => {
+        if (opencvInitialized) {
+            // Clear existing blobs
+            blobs.length = 0;
+
+            // Create temporary canvas to process the image with OpenCV
+            const temp_canvas = document.createElement('canvas');
+            temp_canvas.width = gkhead.width;
+            temp_canvas.height = gkhead.height;
+            const temp_ctx = temp_canvas.getContext('2d');
+            temp_ctx.drawImage(gkhead, 0, 0);
+            const src = cv.imread(temp_canvas);
+            const dst = new cv.Mat();
+            cv.cvtColor(src, dst, cv.COLOR_RGBA2GRAY, 0); // Convert the image to grayscale
+            cv.GaussianBlur(dst, dst, new cv.Size(5, 5), 0, 0, cv.BORDER_DEFAULT); // Apply Gaussian blur to the image
+            cv.threshold(dst, dst, 150, 255, cv.THRESH_BINARY); // Apply binary thresholding to the image
+            cv.dilate(dst, dst, new cv.Mat(), new cv.Point(-1, -1), 2, 1, new cv.Scalar(0));
+            // Detect contours in the image
+            const contours = new cv.MatVector();
+            const hierarchy = new cv.Mat();
+            cv.findContours(dst, contours, hierarchy, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE);
+            for (let i = 0; i < contours.size(); ++i) {
+                // Filter contours based on area
+                const area = cv.contourArea(contours.get(i));
+                if (area < 0.0001 * gkhead.width * gkhead.height || area > 0.8 * gkhead.width * gkhead.height) continue;
+                // Filter contours based on circularity
+                const perimeter = cv.arcLength(contours.get(i), true);
+                const circularity = (4 * Math.PI * area) / (perimeter * perimeter);
+                if (circularity < 0.75) continue; // Skip non-circular contours
+                // Find the largest distance bewtween the points in the contour
+                const points = contours.get(i).data32S;
+                let maxDistance = 0;
+                let p1 = null;
+                let p2 = null;
+                for (let j = 0; j < points.length; j += 2) {
+                    for (let k = j + 2; k < points.length; k += 2) {
+                        const distance = Math.sqrt(Math.pow(points[j] - points[k], 2) + Math.pow(points[j + 1] - points[k + 1], 2));
+                        if (distance > maxDistance) {
+                            maxDistance = distance;
+                            p1 = [points[j], points[j + 1]];
+                            p2 = [points[k], points[k + 1]];
+                        }
+                    }
+                }
+                // Find the longest line segment approximately perpendicular to p1-p2
+                let maxPerpendicularDistance = 0;
+                let perpendicularP1 = null;
+                let perpendicularP2 = null;
+
+                for (let j = 0; j < points.length; j += 2) {
+                    const point1 = { x: points[j], y: points[j + 1] };
+                    for (let k = j + 2; k < points.length; k += 2) {
+                        const point2 = { x: points[k], y: points[k + 1] };
+                        // Calculate the slope of the line p1-p2
+                        const dx = p2[0] - p1[0];
+                        const dy = p2[1] - p1[1];
+                        const lineAngle = Math.atan2(dy, dx);
+                        // Calculate the slope of the line point1-point2
+                        const dx2 = point2.x - point1.x;
+                        const dy2 = point2.y - point1.y;
+                        const segmentAngle = Math.atan2(dy2, dx2);
+                        // Calculate the angle difference
+                        let angleDifference = Math.abs(lineAngle - segmentAngle);
+                        angleDifference = Math.min(angleDifference, Math.abs(Math.PI - angleDifference)); // Normalize to [0, π/2]
+                        // Check if the angle difference is within 15 degrees (~0.2618 radians)
+                        if (Math.abs(angleDifference - Math.PI / 2) <= 0.2618) {
+                            const distance = Math.sqrt(Math.pow(point2.x - point1.x, 2) + Math.pow(point2.y - point1.y, 2));
+                            if (distance > maxPerpendicularDistance) {
+                                maxPerpendicularDistance = distance;
+                                perpendicularP1 = [point1.x, point1.y];
+                                const angle = lineAngle + Math.PI / 2; // Perpendicular angle
+                                const offsetX = Math.cos(angle) * distance * 0.95;
+                                const offsetY = Math.sin(angle) * distance * 0.95;
+                                // Ensure p1 has the lower y-value for consistent calculations
+                                if (p1[1] > p2[1] || (p1[1] === p2[1] && p1[0] > p2[0])) {
+                                    [p1, p2] = [p2, p1];
+                                }
+                                // Update perpendicularP2 based on the side of the line
+                                const side = (dy * point1.x - dx * point1.y + p1[1] * p2[0] - p1[0] * p2[1]);
+                                if (side > 0) {
+                                    perpendicularP2 = [point1.x + offsetX, point1.y + offsetY];
+                                } else {
+                                    perpendicularP2 = [point1.x - offsetX, point1.y - offsetY];
+                                }
+                            }
+                        }
+                    }
+                }
+                if (!perpendicularP1 || !perpendicularP2) continue; // Skip if no perpendicular line is found
+
+                blobs.push({
+                    line1: { x1: p1[0], y1: p1[1], x2: p2[0], y2: p2[1] },
+                    line2: { x1: perpendicularP1[0], y1: perpendicularP1[1], x2: perpendicularP2[0], y2: perpendicularP2[1] }
+                });
+            }
+
+            // Breaks opening of images (Use for debugging OpenCV)
+            // Draw the detected blobs on the main canvas
+            // temp_ctx.drawImage(temp_canvas, 0, 0);
+            // cv.imshow(temp_canvas, dst);
+
+            // Free resources
+            src.delete();
+            dst.delete();
+            temp_canvas.remove();
+            contours.delete(); // Delete the contours MatVector
+            hierarchy.delete(); // Delete the hierarchy Mat
+
+            // Breaks opening of images (Use for debugging OpenCV)
+            // Update image
+            //gkhead = temp_canvas;
+
+            // Redraw the canvas with the detected blobs
+            const ctx = canvas.getContext('2d');
+            redraw(ctx);
+        } else {
+            alert("OpenCV is not initialized yet. Please try again.");
+        }
+    });
+
     /**
      * Event listener for the 'addImage' button.
      * Triggers the hidden file input element when clicked.
@@ -1274,6 +1404,13 @@ document.addEventListener('DOMContentLoaded', function () {
         console.error("Failed to load image.");
     };
 });
+
+var Module = {
+    // https://emscripten.org/docs/api_reference/module.html#Module.onRuntimeInitialized
+    onRuntimeInitialized() {
+        opencvInitialized = true;
+    }
+};
 
 window.onload = loadCanvas;
 
