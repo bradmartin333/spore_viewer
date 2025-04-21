@@ -16,6 +16,11 @@ const initialImage = "start.png";
 const gkhead = new Image();
 
 /**
+ * Creates a new Image object for the secondary image.
+ */
+const gkhead2 = new Image();
+
+/**
  * Array to store the points drawn on the canvas. Each point is an object
  * with x, y, and idx properties.
  */
@@ -209,6 +214,16 @@ function redraw(ctx) {
         ctx.closePath();
     });
 
+
+    // Draw the secondary image if it exists
+    // Scale the image to 30% of the canvas width and position it at the bottom center
+    if (gkhead2.src) {
+        const scale = 0.3 * canvas.width / gkhead2.width;
+        const offsetX = 0.3 * canvas.width;
+        const offsetY = canvas.height - gkhead2.height * scale;
+        ctx.drawImage(gkhead2, offsetX, offsetY, offsetX, gkhead2.height * scale);
+    }
+
     // Scale bar
     const barColor = localStorage.getItem('barColor') || 'black';
     const insetX = 10;
@@ -257,16 +272,33 @@ function redraw(ctx) {
 
     let dataString = "";
 
+    // If local storage contains the array 'note', append each note to the data string
+    const notes = JSON.parse(localStorage.getItem('notes')) || [];
+    console.log(notes);
+    if (notes.length > 0) {
+        notes.forEach(note => {
+            dataString += note + "\n";
+        });
+    }
+
     if (isFirstVisit()) {
         dataString = "welcome to spore viewer!\n" +
             "click the ? below to learn how to use this tool";
     } else if (blobs.length > 0) {
+        if (dataString.length > 0) {
+            dataString += "\n";
+        }
         stats = calculateBlobData(blobs);
         const dataUnit = activeCalibration ? 'µm' : 'px';
-        dataString = `range = (${stats.minX} - ${stats.maxX}) x (${stats.minY} - ${stats.maxY}) ${dataUnit}\n` +
+        dataString += `range = (${stats.minX} - ${stats.maxX}) x (${stats.minY} - ${stats.maxY}) ${dataUnit}\n` +
             `avg = ${stats.averageX} x ${stats.averageY} ${dataUnit}, n = ${stats.count}, Q = ${(stats.averageX / stats.averageY).toFixed(2)}\n` +
-            `stddev = ${stats.standardDeviationX} x ${stats.standardDeviationY} ${dataUnit}, ${activeCalibration ? activeCalibration : 'no'} calibration`;
+            `stddev = ${stats.standardDeviationX} x ${stats.standardDeviationY} ${dataUnit}, ${activeCalibration ? activeCalibration : 'no'} calibration\n`;
     }
+
+    if (dataString.length > 0) {
+        dataString += "\n";
+    }
+    dataString += "tinyurl.com/sporeviewer";
 
     // Draw the data string
     if (dataString.length > 0) {
@@ -919,6 +951,10 @@ document.addEventListener('DOMContentLoaded', function () {
     const resetButton = document.getElementById('reset');
     const canvasColor = document.getElementById('canvasColor');
     const barColor = document.getElementById('barColor');
+    const addImageButton = document.getElementById('addImage');
+    const secondaryImageInput = document.getElementById('secondaryImageInput');
+    const addNoteButton = document.getElementById('addNote');
+    const clearNotesButton = document.getElementById('clearNotes');
 
     /**
      * Event listener for the 'sporeMode' button.
@@ -1048,6 +1084,7 @@ document.addEventListener('DOMContentLoaded', function () {
             localStorage.removeItem('canvasColor');
             localStorage.removeItem('barColor');
             localStorage.removeItem('visited');
+            localStorage.removeItem('notes');
             location.reload();
         }
     });
@@ -1071,6 +1108,55 @@ document.addEventListener('DOMContentLoaded', function () {
     barColor.addEventListener('input', (event) => {
         const color = event.target.value;
         localStorage.setItem('barColor', color);
+        const ctx = canvas.getContext('2d');
+        redraw(ctx);
+    });
+
+    /**
+     * Event listener for the 'addImage' button.
+     * Triggers the hidden file input element when clicked.
+     */
+    addImageButton.addEventListener('click', () => {
+        secondaryImageInput.click(); // Programmatically click the file input
+    });
+
+    /**
+     * Event listener for changes to the image input element.
+     * Reads the selected image file and sets it as the source for the secondary image.
+     * @param {Event} event - The change event object.
+     */
+    secondaryImageInput.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                gkhead2.src = e.target.result; // Set the image source to the data URL
+            };
+            reader.readAsDataURL(file); // Read the file as a data URL
+        }
+    });
+
+    /** Event listener for the 'addNote' button.
+     * Opens an input dialog to enter a note and adds it to a list in local storage.
+     * @param {Event} event - The click event object.
+     */
+    addNoteButton.addEventListener('click', (event) => {
+        const note = prompt("Enter note:", "");
+        if (note) {
+            const notes = JSON.parse(localStorage.getItem('notes')) || [];
+            notes.push(note);
+            localStorage.setItem('notes', JSON.stringify(notes));
+            const ctx = canvas.getContext('2d');
+            redraw(ctx);
+        }
+    });
+
+    /** Event listener for the 'clearNotes' button.
+     * Clears all notes from local storage and the displayed list.
+     * @param {Event} event - The click event object.
+     */
+    clearNotesButton.addEventListener('click', () => {
+        localStorage.removeItem('notes');
         const ctx = canvas.getContext('2d');
         redraw(ctx);
     });
@@ -1100,10 +1186,28 @@ document.addEventListener('DOMContentLoaded', function () {
     };
 
     /**
+     * Event listener for when the gkhead2 image has loaded.
+     * Triggers redraw to display the image on the canvas.
+     */
+    gkhead2.onload = function () {
+        const ctx = canvas.getContext('2d');
+        redraw(ctx);
+    };
+
+
+    /**
      * Event listener for errors during the loading of the gkhead image.
      * Logs an error message to the console.
      */
     gkhead.onerror = function () {
+        console.error("Failed to load image.");
+    };
+
+    /**
+     * Event listener for errors during the loading of the gkhead image.
+     * Logs an error message to the console.
+     */
+    gkhead2.onerror = function () {
         console.error("Failed to load image.");
     };
 });

@@ -55,6 +55,7 @@ canvas {
     display: block;
     margin-left: auto;
     margin-right: auto;
+    margin-bottom: 1em;
     background: var(--white-color);
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius);
@@ -113,6 +114,14 @@ select:hover {
 
 #help:hover {
     background-color: var(--light-purple);
+}
+
+#addImage:hover {
+    background-color: var(--light-grey-hover);
+}
+
+.note-button:hover {
+    background-color: var(--light-grey-hover);
 }
 
 .spore-mode-on {
