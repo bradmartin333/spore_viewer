@@ -13,7 +13,7 @@ const initialImage = "start.png";
 /**
  * Creates a new Image object for the head image.
  */
-let gkhead = new Image();
+const gkhead = new Image();
 
 /**
  * Creates a new Image object for the secondary image.
