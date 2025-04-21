@@ -298,7 +298,7 @@ function redraw(ctx) {
         const dataUnit = activeCalibration ? 'µm' : 'px';
         dataString += `range = (${stats.minX} - ${stats.maxX}) x (${stats.minY} - ${stats.maxY}) ${dataUnit}\n` +
             `avg = ${stats.averageX} x ${stats.averageY} ${dataUnit}, n = ${stats.count}, Q = ${(stats.averageX / stats.averageY).toFixed(2)}\n` +
-            `stddev = ${stats.standardDeviationX} x ${stats.standardDeviationY} ${dataUnit}, ${activeCalibration ? activeCalibration : 'no'} calibration\n`;
+            `stddev = ${stats.standardDeviationX} x ${stats.standardDeviationY} ${dataUnit}, ${activeCalibration ? activeCalibration : 'no'} calibration   \n`;
     }
 
     if (dataString.length > 0) {
@@ -702,6 +702,17 @@ function loadCanvas() {
      * @param {WheelEvent} evt - The mousewheel event object.
      */
     const handleScroll = (evt) => {
+        // Limit the zoom to a range of 0.1 to 10
+        const scaleFactor = 1.1;
+        const minScale = 0.1;
+        const maxScale = 10;
+        const currentScale = ctx.getTransform().a; // Get the current scale factor
+        const newScale = currentScale * Math.pow(scaleFactor, evt.deltaY > 0 ? -1 : 1);
+        if ((newScale < minScale && evt.deltaY > 0) || (newScale > maxScale && evt.deltaY < 0)) {
+            evt.preventDefault();
+            return false; // Prevent zooming out too much or in too much
+        }
+
         const delta = evt.wheelDelta ? evt.wheelDelta / 40 : evt.detail ? -evt.detail : 0;
         if (delta) {
             const pt = ctx.transformedPoint(lastX, lastY);
