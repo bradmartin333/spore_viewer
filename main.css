@@ -22,7 +22,7 @@
 
 body {
     margin: 0;
-    padding: 2em;
+    padding: 0.5em;
     color: var(--text-color);
     font-family: 'Noto Sans KR', sans-serif;
     font-size: 15px;
@@ -44,7 +44,6 @@ h1 {
     width: auto;
     min-width: fit-content;
     max-height: var(--button-height);
-    margin-top: 1em;
     margin-bottom: 1em;
     padding: 20px;
     box-sizing: border-box;
@@ -52,7 +51,6 @@ h1 {
 }
 
 canvas {
-    margin-bottom: 2em;
     margin-top: var(--equal-spacing);
     display: block;
     margin-left: auto;
