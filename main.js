@@ -257,16 +257,33 @@ function redraw(ctx) {
 
     let dataString = "";
 
+    // If local storage contains the array 'note', append each note to the data string
+    const notes = JSON.parse(localStorage.getItem('notes')) || [];
+    console.log(notes);
+    if (notes.length > 0) {
+        notes.forEach(note => {
+            dataString += note + "\n";
+        });
+    }
+
     if (isFirstVisit()) {
         dataString = "welcome to spore viewer!\n" +
             "click the ? below to learn how to use this tool";
     } else if (blobs.length > 0) {
+        if (dataString.length > 0) {
+            dataString += "\n";
+        }
         stats = calculateBlobData(blobs);
         const dataUnit = activeCalibration ? 'µm' : 'px';
-        dataString = `range = (${stats.minX} - ${stats.maxX}) x (${stats.minY} - ${stats.maxY}) ${dataUnit}\n` +
+        dataString += `range = (${stats.minX} - ${stats.maxX}) x (${stats.minY} - ${stats.maxY}) ${dataUnit}\n` +
             `avg = ${stats.averageX} x ${stats.averageY} ${dataUnit}, n = ${stats.count}, Q = ${(stats.averageX / stats.averageY).toFixed(2)}\n` +
-            `stddev = ${stats.standardDeviationX} x ${stats.standardDeviationY} ${dataUnit}, ${activeCalibration ? activeCalibration : 'no'} calibration`;
+            `stddev = ${stats.standardDeviationX} x ${stats.standardDeviationY} ${dataUnit}, ${activeCalibration ? activeCalibration : 'no'} calibration\n`;
     }
+
+    if (dataString.length > 0) {
+        dataString += "\n";
+    }
+    dataString += "tinyurl.com/sporeviewer";
 
     // Draw the data string
     if (dataString.length > 0) {
@@ -919,6 +936,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const resetButton = document.getElementById('reset');
     const canvasColor = document.getElementById('canvasColor');
     const barColor = document.getElementById('barColor');
+    const addNoteButton = document.getElementById('addNote');
+    const clearNotesButton = document.getElementById('clearNotes');
 
     /**
      * Event listener for the 'sporeMode' button.
@@ -1048,6 +1067,7 @@ document.addEventListener('DOMContentLoaded', function () {
             localStorage.removeItem('canvasColor');
             localStorage.removeItem('barColor');
             localStorage.removeItem('visited');
+            localStorage.removeItem('notes');
             location.reload();
         }
     });
@@ -1071,6 +1091,31 @@ document.addEventListener('DOMContentLoaded', function () {
     barColor.addEventListener('input', (event) => {
         const color = event.target.value;
         localStorage.setItem('barColor', color);
+        const ctx = canvas.getContext('2d');
+        redraw(ctx);
+    });
+
+    /** Event listener for the 'addNote' button.
+     * Opens an input dialog to enter a note and adds it to a list in local storage.
+     * @param {Event} event - The click event object.
+     */
+    addNoteButton.addEventListener('click', (event) => {
+        const note = prompt("Enter note:", "");
+        if (note) {
+            const notes = JSON.parse(localStorage.getItem('notes')) || [];
+            notes.push(note);
+            localStorage.setItem('notes', JSON.stringify(notes));
+            const ctx = canvas.getContext('2d');
+            redraw(ctx);
+        }
+    });
+
+    /** Event listener for the 'clearNotes' button.
+     * Clears all notes from local storage and the displayed list.
+     * @param {Event} event - The click event object.
+     */
+    clearNotesButton.addEventListener('click', () => {
+        localStorage.removeItem('notes');
         const ctx = canvas.getContext('2d');
         redraw(ctx);
     });
