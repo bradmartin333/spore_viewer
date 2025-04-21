@@ -116,6 +116,10 @@ select:hover {
     background-color: var(--light-purple);
 }
 
+#detectBlobs:hover {
+    background-color: var(--light-grey-hover);
+}
+
 #addImage:hover {
     background-color: var(--light-grey-hover);
 }
