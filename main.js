@@ -131,7 +131,7 @@ function redraw(ctx) {
     // Fill the entire canvas with the selected color
     const canvasColor = localStorage.getItem('canvasColor') || '#ffffff';
     ctx.fillStyle = canvasColor;
-    ctx.fillRect(-canvas.width, -canvas.height, canvas.width * 3, canvas.height * 3);
+    ctx.fillRect(-canvas.width * 10, -canvas.height * 10, canvas.width * 30, canvas.height * 30);
     ctx.restore();
 
     // Draw the image
@@ -216,12 +216,12 @@ function redraw(ctx) {
 
 
     // Draw the secondary image if it exists
-    // Scale the image to 30% of the canvas width and position it at the bottom center
+    // Scale the image to 30% of the gkhead width and position it at the bottom center
     if (gkhead2.src) {
-        const scale = 0.3 * canvas.width / gkhead2.width;
-        const offsetX = 0.3 * canvas.width;
-        const offsetY = canvas.height - gkhead2.height * scale;
-        ctx.drawImage(gkhead2, offsetX, offsetY, offsetX, gkhead2.height * scale);
+        const offsetX = 0.3 * gkhead.width;
+        const scale = offsetX / gkhead2.width;
+        const offsetY = 0.85 * gkhead.height;
+        ctx.drawImage(gkhead2, offsetX, offsetY, gkhead2.width * scale, gkhead2.height * scale);
     }
 
     // Scale bar
@@ -239,11 +239,12 @@ function redraw(ctx) {
     }
     let scaleBarValue = scaleBarLength; // Default value in pixels
     const activeCalibration = localStorage.getItem('activeCalibration');
+    let activePxPerMicron = 1.0;
     if (activeCalibration) {
         const calibration = calibrations.find(cal => cal.name === activeCalibration);
         if (calibration) {
-            const pxPerMicron = calibration.value;
-            scaleBarValue /= pxPerMicron; // Convert to micrometers
+            activePxPerMicron = calibration.value;
+            scaleBarValue /= activePxPerMicron; // Convert to micrometers
             if (scaleBarValue > 1) {
                 scaleBarValue = scaleBarValue.toFixed(0);
             }
@@ -298,7 +299,7 @@ function redraw(ctx) {
         const dataUnit = activeCalibration ? 'µm' : 'px';
         dataString += `range = (${stats.minX} - ${stats.maxX}) x (${stats.minY} - ${stats.maxY}) ${dataUnit}\n` +
             `avg = ${stats.averageX} x ${stats.averageY} ${dataUnit}, n = ${stats.count}, Q = ${(stats.averageX / stats.averageY).toFixed(2)}\n` +
-            `stddev = ${stats.standardDeviationX} x ${stats.standardDeviationY} ${dataUnit}, ${activeCalibration ? activeCalibration : 'no'} calibration\n`;
+            `stddev = ${stats.standardDeviationX} x ${stats.standardDeviationY} ${dataUnit}${activeCalibration ? `, ${activeCalibration} (${activePxPerMicron} px/µm)` : ''}\n`;
     }
 
     if (dataString.length > 0) {
@@ -702,6 +703,17 @@ function loadCanvas() {
      * @param {WheelEvent} evt - The mousewheel event object.
      */
     const handleScroll = (evt) => {
+        // Limit the zoom to a range of 0.1 to 10
+        const scaleFactor = 1.1;
+        const minScale = 0.1;
+        const maxScale = 10;
+        const currentScale = ctx.getTransform().a; // Get the current scale factor
+        const newScale = currentScale * Math.pow(scaleFactor, evt.deltaY > 0 ? -1 : 1);
+        if ((newScale < minScale && evt.deltaY > 0) || (newScale > maxScale && evt.deltaY < 0)) {
+            evt.preventDefault();
+            return false; // Prevent zooming out too much or in too much
+        }
+
         const delta = evt.wheelDelta ? evt.wheelDelta / 40 : evt.detail ? -evt.detail : 0;
         if (delta) {
             const pt = ctx.transformedPoint(lastX, lastY);
