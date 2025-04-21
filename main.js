@@ -1195,10 +1195,92 @@ document.addEventListener('DOMContentLoaded', function () {
             temp_ctx.drawImage(gkhead, 0, 0);
             const src = cv.imread(temp_canvas);
             const dst = new cv.Mat();
-            // Convert the image to grayscale
-            cv.cvtColor(src, dst, cv.COLOR_RGBA2GRAY, 0);
-            // TODO blob detection
-            cv.imshow(temp_canvas, dst);
+            cv.cvtColor(src, dst, cv.COLOR_RGBA2GRAY, 0); // Convert the image to grayscale
+            cv.GaussianBlur(dst, dst, new cv.Size(5, 5), 0, 0, cv.BORDER_DEFAULT); // Apply Gaussian blur to the image
+            cv.threshold(dst, dst, 150, 255, cv.THRESH_BINARY); // Apply binary thresholding to the image
+            cv.dilate(dst, dst, new cv.Mat(), new cv.Point(-1, -1), 2, 1, new cv.Scalar(0));
+            // Detect contours in the image
+            const contours = new cv.MatVector();
+            const hierarchy = new cv.Mat();
+            cv.findContours(dst, contours, hierarchy, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE);
+            for (let i = 0; i < contours.size(); ++i) {
+                // filter contours based on area
+                const area = cv.contourArea(contours.get(i));
+                if (area < 100) continue; // Skip small contours
+                if (area > 10000) continue; // Skip large contours
+                // filter contours based on circularity
+                const perimeter = cv.arcLength(contours.get(i), true);
+                const circularity = (4 * Math.PI * area) / (perimeter * perimeter);
+                if (circularity < 0.75) continue; // Skip non-circular contours
+                // Find the largest distance bewtween the points in the contour
+                const points = contours.get(i).data32S;
+                let maxDistance = 0;
+                let p1 = null;
+                let p2 = null;
+                for (let j = 0; j < points.length; j += 2) {
+                    for (let k = j + 2; k < points.length; k += 2) {
+                        const distance = Math.sqrt(Math.pow(points[j] - points[k], 2) + Math.pow(points[j + 1] - points[k + 1], 2));
+                        if (distance > maxDistance) {
+                            maxDistance = distance;
+                            p1 = [points[j], points[j + 1]];
+                            p2 = [points[k], points[k + 1]];
+                        }
+                    }
+                }
+                // Find the longest line segment approximately perpendicular to p1-p2
+                let maxPerpendicularDistance = 0;
+                let perpendicularP1 = null;
+                let perpendicularP2 = null;
+
+                for (let j = 0; j < points.length; j += 2) {
+                    const point1 = { x: points[j], y: points[j + 1] };
+                    for (let k = j + 2; k < points.length; k += 2) {
+                        const point2 = { x: points[k], y: points[k + 1] };
+                        // Calculate the slope of the line p1-p2
+                        const dx = p2[0] - p1[0];
+                        const dy = p2[1] - p1[1];
+                        const lineAngle = Math.atan2(dy, dx);
+                        // Calculate the slope of the line point1-point2
+                        const dx2 = point2.x - point1.x;
+                        const dy2 = point2.y - point1.y;
+                        const segmentAngle = Math.atan2(dy2, dx2);
+                        // Calculate the angle difference
+                        let angleDifference = Math.abs(lineAngle - segmentAngle);
+                        angleDifference = Math.min(angleDifference, Math.abs(Math.PI - angleDifference)); // Normalize to [0, π/2]
+                        // Check if the angle difference is within 15 degrees (~0.2618 radians)
+                        if (Math.abs(angleDifference - Math.PI / 2) <= 0.2618) {
+                            const distance = Math.sqrt(Math.pow(point2.x - point1.x, 2) + Math.pow(point2.y - point1.y, 2));
+                            if (distance > maxPerpendicularDistance) {
+                                maxPerpendicularDistance = distance;
+                                perpendicularP1 = [point1.x, point1.y];
+                                const angle = lineAngle + Math.PI / 2; // Perpendicular angle
+                                const offsetX = Math.cos(angle) * distance;
+                                const offsetY = Math.sin(angle) * distance;
+                                // Ensure p1 has the lower y-value for consistent calculations
+                                if (p1[1] > p2[1] || (p1[1] === p2[1] && p1[0] > p2[0])) {
+                                    [p1, p2] = [p2, p1];
+                                }
+                                // Update perpendicularP2 based on the side of the line
+                                const side = (dy * point1.x - dx * point1.y + p1[1] * p2[0] - p1[0] * p2[1]);
+                                if (side > 0) {
+                                    perpendicularP2 = [point1.x + offsetX, point1.y + offsetY];
+                                } else {
+                                    perpendicularP2 = [point1.x - offsetX, point1.y - offsetY];
+                                }
+                            }
+                        }
+                    }
+                }
+                if (!perpendicularP1 || !perpendicularP2) continue; // Skip if no perpendicular line is found
+                
+                blobs.push({
+                    line1: { x1: p1[0], y1: p1[1], x2: p2[0], y2: p2[1] },
+                    line2: { x1: perpendicularP1[0], y1: perpendicularP1[1], x2: perpendicularP2[0], y2: perpendicularP2[1] }
+                });
+            }
+            // Draw the detected blobs on the main canvas
+            // temp_ctx.drawImage(temp_canvas, 0, 0);
+            // cv.imshow(temp_canvas, dst);
             // Free resources
             src.delete();
             dst.delete();
