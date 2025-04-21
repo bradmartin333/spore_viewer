@@ -1209,7 +1209,7 @@ document.addEventListener('DOMContentLoaded', function () {
             for (let i = 0; i < contours.size(); ++i) {
                 // Filter contours based on area
                 const area = cv.contourArea(contours.get(i));
-                if (area < 0.001 * gkhead.width * gkhead.height || area > 0.8 * gkhead.width * gkhead.height) continue;
+                if (area < 0.0001 * gkhead.width * gkhead.height || area > 0.8 * gkhead.width * gkhead.height) continue;
                 // Filter contours based on circularity
                 const perimeter = cv.arcLength(contours.get(i), true);
                 const circularity = (4 * Math.PI * area) / (perimeter * perimeter);
