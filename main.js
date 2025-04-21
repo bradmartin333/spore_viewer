@@ -13,7 +13,7 @@ const initialImage = "start.png";
 /**
  * Creates a new Image object for the head image.
  */
-const gkhead = new Image();
+let gkhead = new Image();
 
 /**
  * Creates a new Image object for the secondary image.
@@ -43,6 +43,11 @@ const blobs = [];
  * of a line segment pixel count and a true measurement in micrometers.
  */
 const calibrations = [];
+
+/**
+ * Variable to store the initialization state of opencv
+ */
+let opencvInitialized = false;
 
 /**
  * Calculates the Euclidean distance between two points.
@@ -281,7 +286,6 @@ function redraw(ctx) {
 
     // If local storage contains the array 'note', append each note to the data string
     const notes = JSON.parse(localStorage.getItem('notes')) || [];
-    console.log(notes);
     if (notes.length > 0) {
         notes.forEach(note => {
             dataString += note + "\n";
@@ -1015,6 +1019,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const resetButton = document.getElementById('reset');
     const canvasColor = document.getElementById('canvasColor');
     const barColor = document.getElementById('barColor');
+    const detectBlobsButton = document.getElementById('detectBlobs');
     const addImageButton = document.getElementById('addImage');
     const secondaryImageInput = document.getElementById('secondaryImageInput');
     const addNoteButton = document.getElementById('addNote');
@@ -1176,6 +1181,37 @@ document.addEventListener('DOMContentLoaded', function () {
         redraw(ctx);
     });
 
+    /** Event listener for the 'detectBlobs' button.
+     * Uses OpenCV to detect blobs in the image and draws them on the canvas.
+     * @param {Event} event - The click event object.
+     */
+    detectBlobsButton.addEventListener('click', () => {
+        if (opencvInitialized) {
+            // Create temporary canvas to process the image with OpenCV
+            const temp_canvas = document.createElement('canvas');
+            temp_canvas.width = gkhead.width;
+            temp_canvas.height = gkhead.height;
+            const temp_ctx = temp_canvas.getContext('2d');
+            temp_ctx.drawImage(gkhead, 0, 0);
+            const src = cv.imread(temp_canvas);
+            const dst = new cv.Mat();
+            // Convert the image to grayscale
+            cv.cvtColor(src, dst, cv.COLOR_RGBA2GRAY, 0);
+            // TODO blob detection
+            cv.imshow(temp_canvas, dst);
+            // Free resources
+            src.delete();
+            dst.delete();
+            temp_canvas.remove();
+            // Update image
+            gkhead = temp_canvas;
+            const ctx = canvas.getContext('2d');
+            redraw(ctx);
+        } else {
+            alert("OpenCV is not initialized yet. Please try again.");
+        }
+    });
+
     /**
      * Event listener for the 'addImage' button.
      * Triggers the hidden file input element when clicked.
@@ -1275,6 +1311,13 @@ document.addEventListener('DOMContentLoaded', function () {
         console.error("Failed to load image.");
     };
 });
+
+var Module = {
+    // https://emscripten.org/docs/api_reference/module.html#Module.onRuntimeInitialized
+    onRuntimeInitialized() {
+        opencvInitialized = true;
+    }
+};
 
 window.onload = loadCanvas;
 
