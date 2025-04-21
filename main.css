@@ -116,7 +116,11 @@ select:hover {
     background-color: var(--light-purple);
 }
 
-#note:hover {
+#addImage:hover {
+    background-color: var(--light-grey-hover);
+}
+
+.note-button:hover {
     background-color: var(--light-grey-hover);
 }
 
