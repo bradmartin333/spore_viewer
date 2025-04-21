@@ -711,6 +711,13 @@ function loadCanvas() {
 
             // Create a blob when the fourth point is added
             if (points.length === 4) {
+                // lines[0] should be longer than lines[1], swap them if this is not true
+                const d1 = distance(lines[0].x1, lines[0].y1, lines[0].x2, lines[0].y2);
+                const d2 = distance(lines[1].x1, lines[1].y1, lines[1].x2, lines[1].y2);
+                if (d2 > d1) {
+                    lines.push(lines[0]);
+                    lines.shift();
+                }
                 blobs.push({ line1: lines[0], line2: lines[1] });
                 lines.length = 0;
                 points.length = 0;
