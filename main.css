@@ -89,10 +89,14 @@ select {
 }
 
 .toolbar button {
-    width: var(--button-width);
+    width: auto;
+    min-width: var(--button-width);
     display: flex;
     justify-content: center;
     align-items: center;
+    padding: 0 var(--button-padding);
+    white-space: nowrap;
+    box-sizing: border-box;
 }
 
 .toolbar .fa-solid {
