@@ -76,9 +76,16 @@ const isCalibrationMode = () => {
  * @returns {boolean} - True if it's the first visit, false otherwise.
  */
 function isFirstVisit() {
+    const questionIcon = document.querySelector('.fa-circle-question');
     if (localStorage.getItem('visited') === null) {
         localStorage.setItem('visited', 'true');
+        if (questionIcon) {
+            questionIcon.style.color = 'green';
+        }
         return true;
+    }
+    if (questionIcon) {
+        questionIcon.style.color = 'black';
     }
     return false;
 }

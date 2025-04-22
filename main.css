@@ -19,6 +19,7 @@
     --white-color: white;
     --border-color: #ccc;
     --canvas-width: 800px;
+    --canvas-height: 600px;
 }
 
 body {
@@ -55,7 +56,8 @@ h1 {
 }
 
 canvas {
-    width: auto;
+    width: var(--canvas-width);
+    height: var(--canvas-height);
     display: block;
     margin-top: var(--equal-spacing);
     margin: 0.5em auto;
@@ -89,10 +91,14 @@ select {
 }
 
 .toolbar button {
-    width: var(--button-width);
+    width: auto;
+    min-width: var(--button-width);
     display: flex;
     justify-content: center;
     align-items: center;
+    padding: 0 var(--button-padding);
+    white-space: nowrap;
+    box-sizing: border-box;
 }
 
 .toolbar .fa-solid {
