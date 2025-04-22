@@ -19,6 +19,7 @@
     --white-color: white;
     --border-color: #ccc;
     --canvas-width: 800px;
+    --canvas-height: 600px;
 }
 
 body {
@@ -55,7 +56,8 @@ h1 {
 }
 
 canvas {
-    width: auto;
+    width: var(--canvas-width);
+    height: var(--canvas-height);
     display: block;
     margin-top: var(--equal-spacing);
     margin: 0.5em auto;
