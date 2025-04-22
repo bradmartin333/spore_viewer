@@ -326,7 +326,7 @@ function redraw(ctx) {
             y: bottomRight.y - 10 / ctx.getTransform().a
         };
         ctx.fillStyle = canvasColor;
-        ctx.globalAlpha = 0.5;
+        ctx.globalAlpha = 0.75;
         ctx.fillRect(labelPos.x - 5 / ctx.getTransform().a,
             labelPos.y - 15 / ctx.getTransform().a * dataLines.length,
             labelWidth + 10 / ctx.getTransform().a,
