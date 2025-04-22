@@ -5,7 +5,7 @@
     --button-padding: 0.5em;
     --button-font-size: 16px;
     --border-radius: 10px;
-    --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     --transition: all 0.3s ease;
     --light-grey: #bfc7d0;
     --light-grey-hover: #a9b0b8;
@@ -44,7 +44,7 @@ h1 {
     padding: 1em;
     margin: 0.5em auto;
     margin-bottom: 1em;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--box-shadow);
     box-sizing: border-box;
     min-height: fit-content;
     max-height: 2*var(--button-height);
@@ -59,7 +59,7 @@ canvas {
     margin-top: var(--equal-spacing);
     margin: 0.5em auto;
     margin-bottom: 1em;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--box-shadow);
     min-height: fit-content;
     max-height: 2*var(--button-height);
     background: var(--white-color);
