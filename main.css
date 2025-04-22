@@ -18,6 +18,7 @@
     --text-color: #111;
     --white-color: white;
     --border-color: #ccc;
+    --canvas-width: 800px;
 }
 
 body {
@@ -36,7 +37,7 @@ h1 {
 }
 
 .toolbar {
-    width: 800px;
+    width: var(--canvas-width);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -165,7 +166,8 @@ select:hover {
 footer {
     display: flex;
     justify-content: center;
-    width: 100%;
+    width: var(--canvas-width);
+    margin: 0.5em auto;
 }
 
 footer i {
