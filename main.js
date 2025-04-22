@@ -1326,6 +1326,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 gkhead2.src = e.target.result; // Set the image source to the data URL
             };
             reader.readAsDataURL(file); // Read the file as a data URL
+        } else {
+            gkhead2.src = ""; // Clear the image source if no file is selected
+            const ctx = canvas.getContext('2d');
+            redraw(ctx);
         }
     });
 
