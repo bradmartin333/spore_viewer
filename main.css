@@ -4,8 +4,8 @@
     --button-width: 3.5em;
     --button-padding: 0.5em;
     --button-font-size: 16px;
-    --border-radius: 5px;
-    --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --border-radius: 10px;
+    --box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     --transition: all 0.3s ease;
     --light-grey: #bfc7d0;
     --light-grey-hover: #a9b0b8;
@@ -21,11 +21,12 @@
 }
 
 body {
+    background: var(--light-grey);
     margin: 0;
     padding: 0.5em;
     color: var(--text-color);
     font-family: 'Noto Sans KR', sans-serif;
-    font-size: 15px;
+    font-size: 16px;
     font-weight: normal;
 }
 
@@ -35,29 +36,34 @@ h1 {
 }
 
 .toolbar {
+    width: 800px;
     display: flex;
     justify-content: center;
     align-items: center;
     gap: 1em;
-    margin: 0 auto;
-    max-width: 80em;
-    width: auto;
-    min-width: fit-content;
-    max-height: var(--button-height);
+    padding: 1em;
+    margin: 0.5em auto;
     margin-bottom: 1em;
-    padding: 20px;
+    box-shadow: var(--box-shadow);
     box-sizing: border-box;
+    min-height: fit-content;
+    max-height: 2*var(--button-height);
+    background: var(--white-color);
     border: none;
+    border-radius: var(--border-radius);
 }
 
 canvas {
-    margin-top: var(--equal-spacing);
+    width: auto;
     display: block;
-    margin-left: auto;
-    margin-right: auto;
+    margin-top: var(--equal-spacing);
+    margin: 0.5em auto;
     margin-bottom: 1em;
+    box-shadow: var(--box-shadow);
+    min-height: fit-content;
+    max-height: 2*var(--button-height);
     background: var(--white-color);
-    border: 1px solid var(--border-color);
+    border: none;
     border-radius: var(--border-radius);
 }
 
