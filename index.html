@@ -14,7 +14,7 @@
 <body>
     <div class="toolbar">
         <button id="openImage"><i class="fa-solid fa-image"></i></button>
-        <input type="file" id="imageInput" accept="image/*" style="display: none;" />
+        <input type="file" id="imageInput" accept="image/*" style="display: none;" onclick="this.value=null;" />
         <button id="sporeMode" class="spore-mode-on">spore mode</button>
         <button id="scaleMode" class="scale-mode-off">scale mode</button>
         <select id="calibrationSelect" class="calibration-select">
